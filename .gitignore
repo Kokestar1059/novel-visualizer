@@ -1,0 +1,28 @@
+# === 秘密情報（絶対にコミットしない） ===
+# DB接続情報・Azure OpenAI APIキーなど
+/config/db.php
+/config/llm.php
+config/*.local.php
+.env
+.env.*
+
+# === 世界A（pipeline/）の扱い ===
+# pipeline/ 自体はGit管理する（.gitignoreに入れない）。Sakuraには上げないだけ。
+# Pythonの生成物・仮想環境のみ除外する。
+pipeline/__pycache__/
+pipeline/**/__pycache__/
+pipeline/.venv/
+pipeline/venv/
+*.pyc
+
+# 解析成果物（nodes.json / edges.json）はリポジトリに含めたいので除外しない。
+
+# === OS / エディタ ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# === ログ・一時ファイル ===
+*.log
+/tmp/

@@ -1,0 +1,42 @@
+# gitleaks 設定 — 秘密情報（DB接続情報・Azure OpenAI APIキー）の混入を検知する
+# 実行: gitleaks detect --source . --config .gitleaks.toml
+# 参照: https://github.com/gitleaks/gitleaks
+title = "novel-visualizer gitleaks config"
+
+# gitleaks 標準ルールを土台にする
+[extend]
+useDefault = true
+
+# --- プロジェクト固有の追加ルール ---
+
+[[rules]]
+id = "azure-openai-key"
+description = "Azure OpenAI API key (32桁の16進)"
+regex = '''(?i)(api[_-]?key|azure[_-]?openai[_-]?key)['"]?\s*[:=]\s*['"]?[0-9a-f]{32}['"]?'''
+tags = ["key", "azure", "openai"]
+
+[[rules]]
+id = "azure-openai-endpoint-with-key"
+description = "Azure OpenAI endpoint に見える文字列"
+regex = '''https://[a-z0-9-]+\.openai\.azure\.com'''
+tags = ["azure", "endpoint"]
+
+[[rules]]
+id = "php-db-password"
+description = "PHP内のDBパスワード直書き"
+regex = '''(?i)\$?(db_?pass(word)?|password)\s*=\s*['"][^'"]{3,}['"]'''
+tags = ["db", "password", "php"]
+
+# --- 誤検知の抑制 ---
+[allowlist]
+description = "サンプル・テンプレート・ドキュメントは対象外"
+paths = [
+  '''config/.*\.example\.php''',
+  '''README\.md''',
+  '''CLAUDE\.md''',
+  '''idea\.md''',
+]
+# よくあるプレースホルダ値は無視する
+regexes = [
+  '''(?i)(your[_-]?api[_-]?key|xxxx+|placeholder|example|dummy|changeme)''',
+]
