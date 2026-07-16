@@ -25,7 +25,13 @@
 ## セットアップ（ローカル開発 / XAMPP）
 
 1. **XAMPP** をインストールし、Apache と MySQL を起動する
-2. このリポジトリを XAMPP の公開ディレクトリ配下に置く（`public/` を配信する）
+2. **`public/` だけを配信する**（リポジトリ本体は htdocs の外に置いたまま、`public/` を指す symlink を1本張る）
+   ```bash
+   ln -s /Users/sengokukouki/novel-visualizer/public \
+         /Applications/XAMPP/xamppfiles/htdocs/novel-visualizer
+   # → http://localhost/novel-visualizer/ で public/ が配信される
+   ```
+   > リポジトリを丸ごと htdocs に入れないこと。`config/`（秘密情報）を web root の外に隔離するためです。
 3. **DB スキーマを作成**する
    ```bash
    mysql -u root -p < sql/schema.sql
@@ -38,10 +44,10 @@
    > `config/` は `.gitignore` 済み。**APIキー・DB接続情報は絶対にコミットしないでください。**
 5. **解析済みJSONを取り込む**（世界A の成果物。v1はダミーJSONでも可）
    ```bash
-   php public/import.php
+   # XAMPP同梱の php CLI を使う（import.php は CLI 実行専用・ブラウザ不可）
+   /Applications/XAMPP/xamppfiles/bin/php public/import.php
    ```
-   `import.php` は CLI 実行専用です（ブラウザからは実行できません）。
-6. ブラウザで `login.php` にアクセスし、ログイン後に `index.php` でグラフを表示する
+6. ブラウザで `http://localhost/novel-visualizer/login.php` にアクセスし、ログイン後に `index.php` でグラフを表示する
 
 ### 世界A（解析パイプライン）をローカルで動かす場合
 
