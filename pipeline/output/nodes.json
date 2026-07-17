@@ -1,0 +1,15 @@
+{
+  "work": {
+    "title": "こころ",
+    "author": "夏目漱石",
+    "source": "青空文庫 https://www.aozora.gr.jp/cards/000148/card773.html"
+  },
+  "nodes": [
+    { "ref": "n1", "label": "私",   "node_type": "person", "frequency": 210 },
+    { "ref": "n2", "label": "先生", "node_type": "person", "frequency": 185 },
+    { "ref": "n3", "label": "K",    "node_type": "person", "frequency": 92 },
+    { "ref": "n4", "label": "お嬢さん", "node_type": "person", "frequency": 74 },
+    { "ref": "n5", "label": "奥さん",   "node_type": "person", "frequency": 68 },
+    { "ref": "n6", "label": "鎌倉",     "node_type": "place",  "frequency": 21 }
+  ]
+}
