@@ -32,6 +32,12 @@ function loginCheck(): void {
 //   401 + JSON（{"error":"unauthorized"}）を返す。フロントが検知して
 //   ログイン画面へ誘導できるようにするため。
 //   ★graph_data.php / node_detail.php 等（#4/#6）で使う想定。
+//
+//   ★セッションID更新について（#4で確定・idea.md §7.3）:
+//     APIでは session_regenerate_id() を「呼ばない」。検証のみ行う。
+//     理由: #5/#6 でフロントが graph_data と node_detail を並行で叩くと、
+//     毎回更新では「片方が古いセッションIDのまま届いて401」の競合が起きうる。
+//     鍵の更新は全画面遷移（loginCheck）とログイン時（login_act）に集約する。
 // ------------------------------------------------------------
 function loginCheckApi(): void {
   if (!isset($_SESSION['chk_ssid']) || $_SESSION['chk_ssid'] != session_id()) {
@@ -39,10 +45,8 @@ function loginCheckApi(): void {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE);
     exit;
-  } else {
-    session_regenerate_id(true);
-    $_SESSION['chk_ssid'] = session_id();
   }
+  // 通過時は何もしない（セッションIDは更新しない。上記コメント参照）
 }
 
 // ------------------------------------------------------------
