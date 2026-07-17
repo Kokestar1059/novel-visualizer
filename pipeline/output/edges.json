@@ -1,0 +1,100 @@
+{
+  "edges": [
+    {
+      "source_ref": "n1",
+      "target_ref": "n2",
+      "edge_type": "師事",
+      "weight": 0.6821,
+      "method": "co_occurrence",
+      "evidence": [
+        {
+          "sentence_id": 12,
+          "text_span_start": 0,
+          "text_span_end": 8,
+          "sentence_text": "私はその人を常に先生と呼んでいた。"
+        },
+        {
+          "sentence_id": 340,
+          "text_span_start": 3,
+          "text_span_end": 5,
+          "sentence_text": "先生は私に向かって、静かにそう言った。"
+        }
+      ]
+    },
+    {
+      "source_ref": "n2",
+      "target_ref": "n3",
+      "edge_type": "友人",
+      "weight": 0.5433,
+      "method": "co_occurrence",
+      "evidence": [
+        {
+          "sentence_id": 610,
+          "text_span_start": 0,
+          "text_span_end": 1,
+          "sentence_text": "Kと私は同じ下宿に暮らしていた。"
+        }
+      ]
+    },
+    {
+      "source_ref": "n3",
+      "target_ref": "n4",
+      "edge_type": "恋慕",
+      "weight": 0.4912,
+      "method": "dependency_parse",
+      "evidence": [
+        {
+          "sentence_id": 720,
+          "text_span_start": 2,
+          "text_span_end": 7,
+          "sentence_text": "Kはお嬢さんに対する切ない恋を打ち明けた。"
+        }
+      ]
+    },
+    {
+      "source_ref": "n2",
+      "target_ref": "n4",
+      "edge_type": "恋慕",
+      "weight": 0.5108,
+      "method": "dependency_parse",
+      "evidence": [
+        {
+          "sentence_id": 735,
+          "text_span_start": 0,
+          "text_span_end": 6,
+          "sentence_text": "先生もまたお嬢さんに心を寄せていた。"
+        }
+      ]
+    },
+    {
+      "source_ref": "n4",
+      "target_ref": "n5",
+      "edge_type": "親子",
+      "weight": 0.7305,
+      "method": "co_occurrence",
+      "evidence": [
+        {
+          "sentence_id": 150,
+          "text_span_start": 0,
+          "text_span_end": 3,
+          "sentence_text": "奥さんとお嬢さんは母と娘であった。"
+        }
+      ]
+    },
+    {
+      "source_ref": "n1",
+      "target_ref": "n6",
+      "edge_type": "共起",
+      "weight": 0.3120,
+      "method": "co_occurrence",
+      "evidence": [
+        {
+          "sentence_id": 3,
+          "text_span_start": 5,
+          "text_span_end": 7,
+          "sentence_text": "私が先生と知り合いになったのは鎌倉である。"
+        }
+      ]
+    }
+  ]
+}
