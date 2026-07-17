@@ -54,7 +54,7 @@
 ```
 解析（世界A）  : Python 3.x + GiNZA / spaCy   … ローカル実行のみ・Sakuraにデプロイしない
 バックエンド    : PHP 8.x + PDO（prepared statements 必須。文字列結合でSQLを組まない）
-DB            : MySQL … ローカル(XAMPP)=8.2.4 で再帰CTE可 / 本番Sakura=★未確認（下記注意）
+DB            : MySQL系 … ローカル(XAMPP)=★MariaDB 10.4.28（再帰CTE可） / 本番Sakura=★未確認（下記注意）
 フロントエンド  : 素のHTML/CSS/JavaScript + Cytoscape.js 3.x（CDN読込・ビルド不要）
 AI           : Azure OpenAI（GPTモデル）… 「自然言語→クエリJSON変換」専用・JSON限定出力を強制
 ホスティング    : Sakura Server（FTP / FileZilla）
@@ -62,10 +62,13 @@ AI           : Azure OpenAI（GPTモデル）… 「自然言語→クエリJSON
 パッケージ管理  : なし（v1は素のPHP。Composer不採用 → ADR-007）
 ```
 
-> **★実装前・デプロイ前に必ず確認：MySQLバージョン**
+> **★実装前・デプロイ前に必ず確認：DBバージョン**
 > N-hop探索クエリの書き方がバージョンで変わる。
-> - 8.0以上 → `WITH RECURSIVE`（再帰CTE）で書ける（ローカルはこれでよい）
-> - 5.7系 → 再帰CTE不可。**PHP側ループにフォールバック**する
+> - MySQL 8.0以上 / MariaDB 10.2.2以上 → `WITH RECURSIVE`（再帰CTE）で書ける
+> - MySQL 5.7系 → 再帰CTE不可。**PHP側ループにフォールバック**する
+> **ローカル(XAMPP)は MariaDB 10.4.28 と判明**（idea.md §4 の「MySQL 8.2.4」は誤り）。再帰CTEは使えるので
+> ローカル開発は `WITH RECURSIVE` で進めてよい。ただし **MariaDB には MySQL 8 専用の照合順序
+> `utf8mb4_0900_ai_ci` が無い**ため、DBの照合順序は両対応の **`utf8mb4_unicode_ci`** を使う。
 > 本番Sakuraのバージョンは未確認。**デプロイ前に必ず確認し、5.7系なら実装方針をユーザーに相談すること。**
 
 ---
