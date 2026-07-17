@@ -1,0 +1,87 @@
+/* ============================================================
+   graph.css — グラフ表示画面（index.php）のスタイル
+     出典: idea.md §9 / Issue #5
+     ・#cy をビューポートいっぱいに広げてネットワーク図を描く
+     ・凡例（レジェンド）で「実線＝統計的抽出／破線＝AI解釈」を常時表示（ADR-004）
+   ============================================================ */
+
+/* グラフ描画領域。ヘッダ（約 3.2rem）を除いた高さを確保する */
+#cy {
+  width: 100%;
+  height: calc(100vh - 3.2rem);
+  display: block;
+  background: #fafafa;
+}
+
+/* データが無いとき／読込中に #cy へ重ねて出すメッセージ */
+.graph-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #888;
+  font-size: .95rem;
+  pointer-events: none;
+}
+
+/* 凡例（レジェンド）。グラフの右下に固定表示する */
+.legend {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  background: rgba(255, 255, 255, .92);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: .7rem .9rem;
+  font-size: .8rem;
+  color: #333;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  line-height: 1.5;
+}
+
+.legend h2 {
+  font-size: .8rem;
+  margin: 0 0 .5rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* 凡例の線サンプル。一次＝実線／二次＝破線 を視覚的に示す（ADR-004） */
+.legend-line {
+  display: inline-block;
+  width: 28px;
+  height: 0;
+  flex: 0 0 auto;
+}
+
+.legend-line.primary {
+  border-top: 3px solid #7a7a7a;   /* 実線＝統計的抽出（事実） */
+}
+
+.legend-line.secondary {
+  border-top: 3px dashed #b08fd6;  /* 破線＝AI解釈（#8で描画予定） */
+}
+
+/* まだ描画対象が無い凡例項目はグレーで「今後」と示す */
+.legend-row.pending {
+  color: #aaa;
+}
+
+/* ノード種別（node_type）の色サンプル */
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.legend-dot.person { background: #4c8bf5; }
+.legend-dot.place  { background: #56b877; }
+.legend-dot.other  { background: #999999; }
