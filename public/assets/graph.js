@@ -272,10 +272,21 @@
     panelCloseEl.addEventListener('click', closePanel);
   }
 
-  function renderGraph(elements) {
+  // elements で（再）描画する。フィルタ結果での再描画にも使う（Issue #7）。
+  //   ★再描画時は前回の Cytoscape インスタンスを破棄してから作り直す（メモリリーク防止）。
+  //   emptyMessage: ノードが0件のときに中央へ出す文言（省略時は既定メッセージ）。
+  function renderGraph(elements, emptyMessage) {
+    // 前回のグラフを破棄（初回は window.cy 未定義なので何もしない）
+    if (window.cy) {
+      try { window.cy.destroy(); } catch (e) { /* 破棄失敗は無視 */ }
+      window.cy = null;
+    }
+    // ノード詳細パネルは古い作品の内容が残りうるので閉じる
+    closePanel();
+
     var nodeCount = (elements.nodes || []).length;
     if (nodeCount === 0) {
-      showMessage('表示できるデータがありません。');
+      showMessage(emptyMessage || '表示できるデータがありません。');
       return;
     }
     showMessage(null);
@@ -309,34 +320,160 @@
     window.cy = cy;
   }
 
-  // --- graph_data.php を取得して描画 ---
-  showMessage('読み込み中…');
+  // ------------------------------------------------------------
+  // 自然言語フィルタ（Issue #7）
+  //   検索窓 → query_llm.php（AIがクエリJSONに翻訳）→ execute_query.php（DB実行）→ 再描画。
+  //   ・AIは翻訳のみ。実行は QueryBuilder のホワイトリスト経由（サーバ側・ADR-005）。
+  //   ・ここ（JS）はUIと再描画のみ担当。DB・認証・データ生成には関与しない。
+  // ------------------------------------------------------------
+  var queryFormEl   = document.getElementById('query-bar');
+  var queryTextEl   = document.getElementById('query-text');
+  var querySubmitEl = document.getElementById('query-submit');
+  var queryResetEl  = document.getElementById('query-reset');
+  var queryStatusEl = document.getElementById('query-status');
 
-  fetch('graph_data.php', {
-    credentials: 'same-origin',
-    headers: { 'Accept': 'application/json' }
-  })
-    .then(function (res) {
-      // 未ログイン（API 401）→ ログイン画面へ誘導（idea.md §9 / #5 完了条件）
-      if (res.status === 401) {
-        window.location.href = 'login.php';
-        return null;
-      }
-      if (!res.ok) {
-        throw new Error('graph_data.php returned HTTP ' + res.status);
-      }
-      return res.json();
+  // APIエラーコード → 利用者向けの日本語メッセージ
+  var ERROR_MESSAGES = {
+    llm_not_configured: 'AI接続が未設定です（config/llm.php を設定してください）。',
+    llm_error:          'AIへの問い合わせに失敗しました。時間をおいて再度お試しください。',
+    text_too_long:      '入力が長すぎます（200文字まで）。',
+    empty_text:         '検索語を入力してください。',
+    invalid_query:      'クエリを解釈できませんでした。',
+    internal_error:     'サーバでエラーが発生しました。'
+  };
+
+  function setStatus(text, isError) {
+    if (!queryStatusEl) return;
+    queryStatusEl.textContent = text || '';
+    queryStatusEl.classList.toggle('error', !!isError);
+  }
+
+  function setQueryBusy(busy) {
+    if (querySubmitEl) querySubmitEl.disabled = busy;
+    if (queryResetEl)  queryResetEl.disabled  = busy;
+  }
+
+  // レスポンスボディ（JSON）から error コードを取り出し、日本語メッセージにする。
+  function messageFromError(data) {
+    var code = (data && data.error) ? data.error : '';
+    return ERROR_MESSAGES[code] || 'エラーが発生しました。';
+  }
+
+  // 401 は共通でログインへ誘導。それ以外の !ok はJSONを読んでメッセージ化して throw。
+  function handleApiResponse(res) {
+    if (res.status === 401) {
+      window.location.href = 'login.php';
+      return null;   // 呼び出し側は null で以降を中断
+    }
+    if (!res.ok) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        var err = new Error('api_error');
+        err.userMessage = messageFromError(data);
+        throw err;
+      });
+    }
+    return res.json();
+  }
+
+  // 自然言語 → query_llm → execute_query → 再描画
+  function runNaturalLanguageQuery(text) {
+    setQueryBusy(true);
+    setStatus('AIが問い合わせを解釈中…', false);
+
+    fetch('query_llm.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ text: text, work_id: currentWorkId })
     })
-    .then(function (data) {
-      if (data === null) return;   // 401でリダイレクト済み
-      // node_detail.php へ渡すため、描画した作品の work_id を覚えておく（#6）
-      currentWorkId = (data && data.work_id !== undefined) ? data.work_id : null;
-      var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
-      renderGraph(elements);
-    })
-    .catch(function (err) {
-      // 通信・パース失敗。詳細はコンソールへ、画面には簡潔なメッセージのみ。
-      console.error('グラフデータの取得に失敗しました:', err);
-      showMessage('グラフデータの取得に失敗しました。');
+      .then(handleApiResponse)
+      .then(function (query) {
+        if (query === null) return null;   // 401でリダイレクト済み
+        // AIが返したクエリJSONを、そのまま execute_query.php に渡してDB実行する。
+        // （実行の安全性はサーバ側 QueryBuilder のホワイトリストが担保する）
+        return fetch('execute_query.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(query)
+        })
+          .then(handleApiResponse)
+          .then(function (data) {
+            if (data === null) return;   // 401でリダイレクト済み
+            var params = query.params || {};
+            var edgeType = params.edge_type;
+            var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
+
+            if (edgeType) {
+              renderGraph(elements, '「' + edgeType + '」に該当する関係はありませんでした。');
+              setStatus('「' + edgeType + '」で絞り込み中（' +
+                        (elements.edges || []).length + '件の関係）。', false);
+            } else {
+              // AIが関係種別を特定できなかった（全体表示相当）
+              renderGraph(elements, '表示できるデータがありません。');
+              setStatus('関係の種類を特定できませんでした。全体を表示しています。', false);
+            }
+          });
+      })
+      .catch(function (err) {
+        console.error('自然言語フィルタに失敗しました:', err);
+        setStatus(err.userMessage || 'エラーが発生しました。', true);
+      })
+      .then(function () {
+        setQueryBusy(false);
+      });
+  }
+
+  if (queryFormEl) {
+    queryFormEl.addEventListener('submit', function (evt) {
+      evt.preventDefault();
+      var text = (queryTextEl ? queryTextEl.value : '').trim();
+      if (text === '') {
+        setStatus('検索語を入力してください。', true);
+        return;
+      }
+      runNaturalLanguageQuery(text);
     });
+  }
+  if (queryResetEl) {
+    queryResetEl.addEventListener('click', function () {
+      if (queryTextEl) queryTextEl.value = '';
+      setStatus('', false);
+      loadInitialGraph();   // 全エッジを取り直して全体表示に戻す
+    });
+  }
+
+  // --- graph_data.php を取得して描画（初回表示・全体表示に戻す 共通） ---
+  function loadInitialGraph() {
+    showMessage('読み込み中…');
+    fetch('graph_data.php', {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function (res) {
+        // 未ログイン（API 401）→ ログイン画面へ誘導（idea.md §9 / #5 完了条件）
+        if (res.status === 401) {
+          window.location.href = 'login.php';
+          return null;
+        }
+        if (!res.ok) {
+          throw new Error('graph_data.php returned HTTP ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (data === null) return;   // 401でリダイレクト済み
+        // node_detail.php / query_llm.php へ渡すため、描画した作品の work_id を覚えておく（#6/#7）
+        currentWorkId = (data && data.work_id !== undefined) ? data.work_id : null;
+        var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
+        renderGraph(elements);
+      })
+      .catch(function (err) {
+        // 通信・パース失敗。詳細はコンソールへ、画面には簡潔なメッセージのみ。
+        console.error('グラフデータの取得に失敗しました:', err);
+        showMessage('グラフデータの取得に失敗しました。');
+      });
+  }
+
+  loadInitialGraph();
 })();
