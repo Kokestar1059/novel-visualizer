@@ -15,6 +15,16 @@
   var container = document.getElementById('cy');
   var messageEl = document.getElementById('graph-message');
 
+  // ノード詳細サイドパネル（Issue #6）関連の要素
+  var panelEl      = document.getElementById('node-panel');
+  var panelTitleEl = document.getElementById('node-panel-title');
+  var panelBodyEl  = document.getElementById('node-panel-body');
+  var panelCloseEl = document.getElementById('node-panel-close');
+
+  // graph_data.php が返した work_id を覚えておき、node_detail.php へ同じ作品を渡す。
+  // （最新作品の自動選択が graph と detail でズレないようにするため）
+  var currentWorkId = null;
+
   // 画面中央のメッセージ表示ヘルパー（読込中・データなし・エラー用）
   function showMessage(text) {
     if (!messageEl) return;
@@ -83,6 +93,185 @@
     ];
   }
 
+  // ------------------------------------------------------------
+  // ノード詳細サイドパネル（Issue #6）
+  // ------------------------------------------------------------
+
+  function closePanel() {
+    if (panelEl) panelEl.hidden = true;
+  }
+
+  // 原文中の抽出箇所（[start, end)）を <mark> でハイライトしたノードを作る。
+  // ★sentence_text は原文（外部由来）なので innerHTML を使わず textContent で組む（XSS対策）。
+  //   span が原文長を超える・start>=end 等の不正時はハイライトせず全文だけ出す（安全側）。
+  function buildEvidenceText(text, start, end) {
+    var wrap = document.createElement('div');
+    wrap.className = 'evidence-text';
+
+    var len = text.length;
+    var s = (typeof start === 'number') ? start : -1;
+    var e = (typeof end === 'number') ? end : -1;
+    var valid = s >= 0 && e > s && s <= len;
+
+    if (!valid) {
+      wrap.textContent = text;
+      return wrap;
+    }
+    if (e > len) e = len;   // 終端が原文長を超える場合は末尾に丸める
+
+    wrap.appendChild(document.createTextNode(text.slice(0, s)));
+    var mark = document.createElement('mark');
+    mark.textContent = text.slice(s, e);
+    wrap.appendChild(mark);
+    wrap.appendChild(document.createTextNode(text.slice(e)));
+    return wrap;
+  }
+
+  // 隣接ノード1件ぶんのカード（エッジ＋相手ノード＋エビデンス）を組み立てる。
+  function buildNeighborCard(nb) {
+    var card = document.createElement('div');
+    card.className = 'neighbor';
+
+    var head = document.createElement('div');
+    head.className = 'neighbor-head';
+
+    var name = document.createElement('span');
+    name.className = 'neighbor-name';
+    name.textContent = (nb.neighbor && nb.neighbor.label) ? nb.neighbor.label : '(不明)';
+    head.appendChild(name);
+
+    // 関係の向き（out＝このノードが起点／in＝終点）
+    var dir = document.createElement('span');
+    dir.className = 'neighbor-dir';
+    dir.textContent = (nb.direction === 'out') ? '→ への関係' : '← からの関係';
+    head.appendChild(dir);
+
+    if (nb.edge_type) {
+      var type = document.createElement('span');
+      type.className = 'neighbor-type';
+      type.textContent = nb.edge_type;
+      head.appendChild(type);
+    }
+
+    var weight = document.createElement('span');
+    weight.className = 'neighbor-weight';
+    // 抽出手法（method）と関係の強さ（weight）を検証用に併記
+    var methodLabel = nb.method ? nb.method + ' / ' : '';
+    weight.textContent = methodLabel + 'w=' + nb.weight;
+    head.appendChild(weight);
+
+    card.appendChild(head);
+
+    // エビデンス（原文根拠）。ADR-003: 原文＋文番号・位置を辿れる形で見せる。
+    var evList = nb.evidence || [];
+    if (evList.length === 0) {
+      var noEv = document.createElement('div');
+      noEv.className = 'evidence-meta';
+      noEv.textContent = 'エビデンスなし';
+      card.appendChild(noEv);
+    } else {
+      evList.forEach(function (ev) {
+        var evBox = document.createElement('div');
+        evBox.className = 'evidence';
+        evBox.appendChild(
+          buildEvidenceText(ev.sentence_text || '', ev.text_span_start, ev.text_span_end)
+        );
+
+        var meta = document.createElement('div');
+        meta.className = 'evidence-meta';
+        var parts = [];
+        if (ev.sentence_id !== null && ev.sentence_id !== undefined) {
+          parts.push('第' + ev.sentence_id + '文');
+        }
+        if (ev.text_span_start !== null && ev.text_span_start !== undefined &&
+            ev.text_span_end !== null && ev.text_span_end !== undefined) {
+          parts.push('位置 ' + ev.text_span_start + '–' + ev.text_span_end);
+        }
+        meta.textContent = parts.join(' / ');
+        evBox.appendChild(meta);
+
+        card.appendChild(evBox);
+      });
+    }
+    return card;
+  }
+
+  // node_detail.php のレスポンスをサイドパネルへ描画する。
+  function renderPanel(data) {
+    if (!panelEl || !panelBodyEl) return;
+    var node = data.node || {};
+
+    panelTitleEl.textContent = node.label || 'ノード詳細';
+
+    // 中身を作り直す（前回表示のクリア）
+    panelBodyEl.textContent = '';
+
+    var meta = document.createElement('div');
+    meta.className = 'node-panel-meta';
+    var metaParts = [];
+    if (node.node_type) metaParts.push('種別: ' + node.node_type);
+    if (node.frequency !== null && node.frequency !== undefined) {
+      metaParts.push('出現頻度: ' + node.frequency);
+    }
+    meta.textContent = metaParts.join(' / ');
+    panelBodyEl.appendChild(meta);
+
+    var neighbors = data.neighbors || [];
+    var title = document.createElement('div');
+    title.className = 'node-panel-section-title';
+    title.textContent = '隣接ノードとエビデンス（' + neighbors.length + '件）';
+    panelBodyEl.appendChild(title);
+
+    if (neighbors.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'node-panel-empty';
+      empty.textContent = 'この作品内で接続する関係はありません。';
+      panelBodyEl.appendChild(empty);
+    } else {
+      neighbors.forEach(function (nb) {
+        panelBodyEl.appendChild(buildNeighborCard(nb));
+      });
+    }
+
+    panelEl.hidden = false;
+    panelEl.scrollTop = 0;
+  }
+
+  // 指定ノードの詳細を node_detail.php から取得してパネルへ表示する。
+  function loadNodeDetail(nodeId) {
+    var url = 'node_detail.php?node_id=' + encodeURIComponent(nodeId);
+    if (currentWorkId !== null && currentWorkId !== undefined) {
+      url += '&work_id=' + encodeURIComponent(currentWorkId);
+    }
+    fetch(url, {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function (res) {
+        // 未ログイン（API 401）→ ログイン画面へ誘導（graph_data.php と同じ挙動）
+        if (res.status === 401) {
+          window.location.href = 'login.php';
+          return null;
+        }
+        if (!res.ok) {
+          throw new Error('node_detail.php returned HTTP ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (data === null) return;   // 401でリダイレクト済み
+        renderPanel(data);
+      })
+      .catch(function (err) {
+        console.error('ノード詳細の取得に失敗しました:', err);
+      });
+  }
+
+  // 閉じるボタン（存在すれば）
+  if (panelCloseEl) {
+    panelCloseEl.addEventListener('click', closePanel);
+  }
+
   function renderGraph(elements) {
     var nodeCount = (elements.nodes || []).length;
     if (nodeCount === 0) {
@@ -102,6 +291,18 @@
         nodeRepulsion: 6000
       },
       wheelSensitivity: 0.2
+    });
+
+    // ノードをタップ→詳細サイドパネルを表示（Issue #6）
+    cy.on('tap', 'node', function (evt) {
+      loadNodeDetail(evt.target.id());
+    });
+
+    // 背景（ノード/エッジ以外）をタップ→パネルを閉じる
+    cy.on('tap', function (evt) {
+      if (evt.target === cy) {
+        closePanel();
+      }
     });
 
     // グローバルに公開しておくと後続 issue（#6 クリック→詳細）から参照しやすい
@@ -128,6 +329,8 @@
     })
     .then(function (data) {
       if (data === null) return;   // 401でリダイレクト済み
+      // node_detail.php へ渡すため、描画した作品の work_id を覚えておく（#6）
+      currentWorkId = (data && data.work_id !== undefined) ? data.work_id : null;
       var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
       renderGraph(elements);
     })
