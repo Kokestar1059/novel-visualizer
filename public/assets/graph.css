@@ -85,3 +85,134 @@
 .legend-dot.person { background: #4c8bf5; }
 .legend-dot.place  { background: #56b877; }
 .legend-dot.other  { background: #999999; }
+
+/* ============================================================
+   ノード詳細サイドパネル（Issue #6）
+     ・ノードクリックで右側にスライドイン。隣接ノードとエビデンス原文を表示。
+     ・エビデンスは原文＋文番号・位置を併記し、抽出箇所を <mark> でハイライト（ADR-003）。
+   ============================================================ */
+.node-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 340px;
+  max-width: 85vw;
+  height: calc(100vh - 3.2rem);
+  box-sizing: border-box;
+  background: #fff;
+  border-left: 1px solid #ddd;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, .08);
+  overflow-y: auto;
+  padding: 0 1rem 1.2rem;
+  font-size: .85rem;
+  color: #333;
+}
+
+/* hidden 属性が付いている間は非表示（初期状態・閉じたとき） */
+.node-panel[hidden] { display: none; }
+
+.node-panel-head {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .8rem 0 .5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.node-panel-head h2 {
+  font-size: 1rem;
+  margin: 0;
+  color: #2b6cb0;
+  word-break: break-all;
+}
+
+.node-panel-close {
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 0 .2rem;
+}
+.node-panel-close:hover { color: #333; }
+
+/* クリックしたノード自身のメタ情報（種別・頻度） */
+.node-panel-meta {
+  color: #666;
+  margin: .6rem 0 1rem;
+}
+
+.node-panel-section-title {
+  font-size: .8rem;
+  font-weight: 600;
+  color: #555;
+  margin: 1rem 0 .5rem;
+}
+
+/* 隣接ノード1件（エッジ＋相手ノード＋エビデンス）のカード */
+.neighbor {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: .6rem .7rem;
+  margin-bottom: .7rem;
+  background: #fcfcfc;
+}
+
+.neighbor-head {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  margin-bottom: .4rem;
+}
+
+.neighbor-name { font-weight: 600; }
+
+/* 関係の向き（out＝起点／in＝終点）を小さく示す矢印バッジ */
+.neighbor-dir {
+  font-size: .7rem;
+  color: #888;
+}
+
+/* エッジ種別バッジ */
+.neighbor-type {
+  font-size: .72rem;
+  background: #eef2f8;
+  color: #2b6cb0;
+  border-radius: 4px;
+  padding: .05rem .4rem;
+}
+
+.neighbor-weight { font-size: .72rem; color: #999; }
+
+/* エビデンス原文ブロック（検証用。原文＋文番号・位置） */
+.evidence {
+  border-left: 3px solid #cbd5e0;
+  padding: .3rem 0 .3rem .6rem;
+  margin: .4rem 0 0;
+}
+
+.evidence-text {
+  line-height: 1.6;
+  color: #222;
+}
+
+/* 抽出箇所のハイライト（ADR-003 検証可能性） */
+.evidence-text mark {
+  background: #fde68a;
+  padding: 0 .05em;
+  border-radius: 2px;
+}
+
+/* 文番号・位置などのメタ情報 */
+.evidence-meta {
+  font-size: .72rem;
+  color: #999;
+  margin-top: .2rem;
+}
+
+.node-panel-empty { color: #999; margin-top: 1rem; }
