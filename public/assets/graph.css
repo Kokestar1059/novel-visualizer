@@ -24,6 +24,66 @@
   pointer-events: none;
 }
 
+/* ============================================================
+   自然言語フィルタの検索窓（Issue #7）
+     ・グラフ左上に重ねて表示。入力→AI翻訳→DB実行→再描画。
+     ・status 行に「解釈結果（例: 『恋慕』で絞り込み）」やエラーを表示する。
+   ============================================================ */
+.query-bar {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: .55rem .7rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  z-index: 5;
+}
+
+.query-text {
+  flex: 1 1 240px;
+  min-width: 160px;
+  font-size: .9rem;
+  padding: .4rem .55rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.query-btn {
+  font-size: .85rem;
+  padding: .4rem .8rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+.query-btn:hover { background: #f2f5f9; }
+.query-btn.primary {
+  background: #2b6cb0;
+  border-color: #2b6cb0;
+  color: #fff;
+}
+.query-btn.primary:hover { background: #255a94; }
+.query-btn:disabled { opacity: .55; cursor: default; }
+
+/* 解釈結果・エラーの表示行（幅いっぱいで折り返す） */
+.query-status {
+  flex: 1 1 100%;
+  font-size: .78rem;
+  color: #666;
+  min-height: 1em;
+}
+.query-status.error { color: #c53030; }
+
 /* 凡例（レジェンド）。グラフの右下に固定表示する */
 .legend {
   position: absolute;
