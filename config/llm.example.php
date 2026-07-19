@@ -17,6 +17,9 @@
 return [
   // Azure OpenAI リソースのエンドポイント（末尾スラッシュ不要）
   //   例: https://my-resource.openai.azure.com
+  //   例: https://my-resource.services.ai.azure.com（Azure AI Foundry）
+  //   ※Foundryの「プロジェクトURL」（.../api/projects/xxx が付いた形）を貼っても動く。
+  //     query_llm.php がホスト部分だけを使い、/openai/deployments/... を自前で付ける。
   'endpoint'    => 'https://YOUR_RESOURCE_NAME.openai.azure.com',
 
   // APIキー（★秘密情報。絶対に公開しない）

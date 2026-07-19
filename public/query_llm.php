@@ -186,9 +186,19 @@ function buildMessages(string $text, array $allowedTypes): array {
 //   参考: https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/json-mode
 // ------------------------------------------------------------
 function callAzureOpenAI(array $llm, array $messages): ?array {
-  // エンドポイントURL（デプロイ名・api-version はURLエンコードして組み立てる）
-  $endpoint = rtrim((string)$llm['endpoint'], '/');
-  $url = $endpoint
+  // エンドポイントは「ホスト部分のみ」を使う。
+  //   Azure OpenAI の chat completions は常に https://<host>/openai/deployments/<dep>/... の形。
+  //   設定に Foundry の"プロジェクトURL"（.../api/projects/xxx）を貼られても、その末尾パスは
+  //   ここで捨ててホストだけ使う（付けたままだと api-version エラーで 400 になるため）。
+  $parts  = parse_url((string)$llm['endpoint']);
+  $scheme = $parts['scheme'] ?? 'https';
+  $host   = $parts['host'] ?? '';
+  if ($host === '') {
+    error_log('query_llm: invalid endpoint (host not found).');
+    return null;
+  }
+  $base = $scheme . '://' . $host . (isset($parts['port']) ? ':' . $parts['port'] : '');
+  $url = $base
        . '/openai/deployments/' . rawurlencode((string)$llm['deployment'])
        . '/chat/completions?api-version=' . rawurlencode((string)$llm['api_version']);
 
