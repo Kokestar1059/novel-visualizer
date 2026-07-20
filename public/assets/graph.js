@@ -436,13 +436,20 @@
           .then(function (data) {
             if (data === null) return;   // 401でリダイレクト済み
             var params = query.params || {};
-            var edgeType = params.edge_type;
             var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
+            var edgeCount = (elements.edges || []).length;
 
-            if (edgeType) {
-              renderGraph(elements, '「' + edgeType + '」に該当する関係はありませんでした。');
-              setStatus('「' + edgeType + '」で絞り込み中（' +
-                        (elements.edges || []).length + '件の関係）。', false);
+            if (query.action === 'get_neighbors') {
+              // N-hop近傍（#9）: 中心ノードから max_depth ホップ以内の部分グラフを表示。
+              var center = params.center_node;
+              var depth  = params.max_depth || 1;
+              renderGraph(elements, '「' + center + '」の近くに表示できる関係はありませんでした。');
+              setStatus('「' + center + '」を中心に ' + depth + ' ホップ以内を表示中（' +
+                        edgeCount + '件の関係）。', false);
+            } else if (params.edge_type) {
+              renderGraph(elements, '「' + params.edge_type + '」に該当する関係はありませんでした。');
+              setStatus('「' + params.edge_type + '」で絞り込み中（' +
+                        edgeCount + '件の関係）。', false);
             } else {
               // AIが関係種別を特定できなかった（全体表示相当）
               renderGraph(elements, '表示できるデータがありません。');
