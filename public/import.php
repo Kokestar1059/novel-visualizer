@@ -88,6 +88,14 @@ try {
     $delEdges->bindValue(':wid', $oldWorkId, PDO::PARAM_INT);
     $delEdges->execute();
 
+    // llm_groupings（二次データ・AI解釈）も削除する。
+    //   nodes を置き換えると、古い node_id を指すグルーピングは無効になるため
+    //   （FK制約 llm_groupings.node_id → nodes.id のためにも nodes 削除前に消す）。
+    //   ★一次データ（nodes/edges/evidence）と物理分離のまま扱う（ADR-004）。二次データは再生成すればよい。
+    $delGroupings = $pdo->prepare('DELETE FROM llm_groupings WHERE work_id = :wid');
+    $delGroupings->bindValue(':wid', $oldWorkId, PDO::PARAM_INT);
+    $delGroupings->execute();
+
     $delNodes = $pdo->prepare('DELETE FROM nodes WHERE work_id = :wid');
     $delNodes->bindValue(':wid', $oldWorkId, PDO::PARAM_INT);
     $delNodes->execute();
