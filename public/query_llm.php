@@ -90,8 +90,9 @@ try {
     exit;
   }
 
-  // --- 5. AIに渡す「実在する edge_type の選択肢」を取得（ADR-002） ---
-  $allowedTypes = $qb->distinctEdgeTypes($workId);   // 例: ['友人','師事','恋慕', ...]
+  // --- 5. AIに渡す「実在する選択肢」を取得（ADR-002：実在する値しか見せない） ---
+  $allowedTypes  = $qb->distinctEdgeTypes($workId);        // 例: ['友人','師事','恋慕', ...]
+  $allowedLabels = $qb->distinctNodeLabels($workId, 200);  // center_node の候補（頻度上位200件）
 
   // --- 6. 設定読込。プレースホルダのままなら設定エラーを明示（誤送信防止） ---
   $llm = require __DIR__ . '/../config/llm.php';
@@ -107,7 +108,7 @@ try {
   }
 
   // --- 7. Azure OpenAI 呼び出し（自然言語 → クエリJSON） ---
-  $aiJson = callAzureOpenAI($llm, buildMessages($text, $allowedTypes));
+  $aiJson = callAzureOpenAI($llm, buildMessages($text, $allowedTypes, $allowedLabels));
   if ($aiJson === null) {
     // 上流エラー（詳細は error_log 済み）。クライアントには汎用エラーのみ。
     http_response_code(502);
@@ -116,24 +117,11 @@ try {
   }
 
   // --- 8. AI出力をサーバ側で再検証して、安全なクエリJSONに正規化（多層防御） ---
-  //   - action は filter_edges 固定
-  //   - edge_type は実在リストに在るものだけ採用。無ければ null（＝全体表示）に丸める
-  //   - work_id はサーバ解決値で上書き（AIの言い分は使わない）
-  $aiEdgeType = null;
-  if (isset($aiJson['params']) && is_array($aiJson['params'])) {
-    $cand = $aiJson['params']['edge_type'] ?? null;
-    if (is_string($cand) && in_array($cand, $allowedTypes, true)) {
-      $aiEdgeType = $cand;
-    } elseif (is_string($cand) && $cand !== '') {
-      // 実在しない種別をAIが返した＝ハルシネーション。採用せず記録のみ（本体データは汚さない）。
-      error_log('query_llm: AI returned unknown edge_type; coerced to null.');
-    }
-  }
+  //   AIが選べる action は filter_edges / get_neighbors の2種のみ。それ以外は filter_edges(全体) に丸める。
+  //   work_id は常にサーバ解決値で上書き（AIの言い分は使わない）。
+  $safe = normalizeQuery($aiJson, $workId, $allowedTypes, $allowedLabels);
 
-  echo json_encode(
-    ['action' => 'filter_edges', 'params' => ['work_id' => $workId, 'edge_type' => $aiEdgeType]],
-    JSON_UNESCAPED_UNICODE
-  );
+  echo json_encode($safe, JSON_UNESCAPED_UNICODE);
 } catch (Throwable $ex) {
   // 予期せぬ失敗。詳細は返さず500 JSONのみ（キー等が漏れないように）。
   error_log('query_llm: ' . $ex->getMessage());
@@ -150,33 +138,94 @@ try {
 // buildMessages — Azure OpenAI に送る messages 配列を組み立てる。
 //   ★プロンプトの肝（idea.md §8.2）:
 //     - 出力は指定スキーマのJSONのみ（前置き・```なし。json_object モードでも明示する）
-//     - edge_type は「渡した一覧」からのみ選ぶ。無ければ null
+//     - edge_type / center_node は「渡した一覧」からのみ選ぶ
 //     - 新しい事実・エンティティ・関係を創作しない
-//   原文は一切渡さない。渡すのは「関係種別の一覧」だけ（ADR-002/原則4）。
+//   原文は一切渡さない。渡すのは「関係種別の一覧」と「ノードのラベル一覧」だけ（ADR-002/原則4）。
+//   action は filter_edges（種別で絞る）と get_neighbors（中心ノードのN-hop近傍）の2種（#9）。
 // ------------------------------------------------------------
-function buildMessages(string $text, array $allowedTypes): array {
+function buildMessages(string $text, array $allowedTypes, array $allowedLabels): array {
   // 選択肢はJSON配列の文字列にして曖昧さをなくす
-  $typesJson = json_encode(array_values($allowedTypes), JSON_UNESCAPED_UNICODE);
+  $typesJson  = json_encode(array_values($allowedTypes),  JSON_UNESCAPED_UNICODE);
+  $labelsJson = json_encode(array_values($allowedLabels), JSON_UNESCAPED_UNICODE);
 
   $system =
-    "あなたは、日本語小説の関係グラフを絞り込むための『クエリ翻訳器』です。\n" .
-    "ユーザーの自然言語による指示を、下記スキーマの JSON にのみ翻訳してください。\n" .
+    "あなたは、日本語小説の関係グラフを操作するための『クエリ翻訳器』です。\n" .
+    "ユーザーの自然言語による指示を、下記いずれかのスキーマの JSON にのみ翻訳してください。\n" .
+    "\n" .
+    "【選べる操作(action)は次の2種のみ】\n" .
+    "- filter_edges … 関係の種別で絞り込む（例:「恋慕の関係だけ見せて」）\n" .
+    "- get_neighbors … ある登場人物を中心に、指定ホップ数以内の近くの関係だけを見せる\n" .
+    "                  （例:「太郎を中心に2ホップ」「花子の周りだけ」）\n" .
     "\n" .
     "【厳守事項】\n" .
     "1. 出力は JSON オブジェクトのみ。前置き・説明・コードフェンス(```)を一切含めない。\n" .
-    "2. action は必ず \"filter_edges\" とする。他の値は禁止。\n" .
-    "3. params.edge_type は、次の『関係種別リスト』の中の値を1つだけ選ぶ。該当が無ければ null。\n" .
+    "2. action は \"filter_edges\" か \"get_neighbors\" のどちらか。他の値は禁止。\n" .
+    "3. filter_edges の params.edge_type は、次の『関係種別リスト』の値を1つだけ選ぶ。該当が無ければ null。\n" .
     "   関係種別リスト: {$typesJson}\n" .
-    "4. リストに無い関係種別・存在しない登場人物・新しい事実を絶対に創作しない。\n" .
-    "5. 「全部」「全体」「すべて」など種別を絞らない指示のときは edge_type を null にする。\n" .
+    "4. get_neighbors の params.center_node は、次の『ノード一覧』の値を1つだけ選ぶ。\n" .
+    "   ノード一覧: {$labelsJson}\n" .
+    "5. get_neighbors の params.max_depth は 1〜4 の整数。指示が曖昧なら 1。\n" .
+    "6. リストに無い関係種別・ノード・新しい事実を絶対に創作しない。\n" .
+    "7. 中心となる人物が指定されていれば get_neighbors、種別での絞り込みなら filter_edges を選ぶ。\n" .
+    "   「全部」「全体」「すべて」など絞らない指示は filter_edges で edge_type を null にする。\n" .
     "\n" .
-    "【出力スキーマ】\n" .
-    "{ \"action\": \"filter_edges\", \"params\": { \"edge_type\": <リスト内の文字列 または null> } }";
+    "【出力スキーマ（いずれか一方）】\n" .
+    "{ \"action\": \"filter_edges\",  \"params\": { \"edge_type\": <リスト内の文字列 または null> } }\n" .
+    "{ \"action\": \"get_neighbors\", \"params\": { \"center_node\": <ノード一覧内の文字列>, \"max_depth\": <1〜4の整数> } }";
 
   return [
     ['role' => 'system', 'content' => $system],
     ['role' => 'user',   'content' => $text],
   ];
+}
+
+// ------------------------------------------------------------
+// normalizeQuery — AIの出力を、サーバ側で安全なクエリJSONに正規化する（多層防御の要）。
+//   AIの言い分をそのまま信用せず、実在する値だけを採用して確定クエリを組み立てる。
+//     - action は filter_edges / get_neighbors のみ許可。未知なら filter_edges(全体) にフォールバック
+//     - work_id は常に引数の $workId（サーバ解決値）で上書き
+//     - filter_edges: edge_type は実在リストに在るものだけ採用。無ければ null（＝全体表示）
+//     - get_neighbors: center_node は実在ラベルに照合。不一致なら filter_edges(全体) に落とす
+//                      （＝存在しない人物を指定されたら黙って全体表示に戻す）。max_depth は 1〜4 にクランプ
+//   ★ここで丸めても QueryBuilder 側でも再検証する（execute_query は query_llm を信用しない設計）。
+// ------------------------------------------------------------
+function normalizeQuery(array $aiJson, int $workId, array $allowedTypes, array $allowedLabels): array {
+  $action = $aiJson['action'] ?? null;
+  $params = (isset($aiJson['params']) && is_array($aiJson['params'])) ? $aiJson['params'] : [];
+
+  // 全体表示相当（フォールバック先）
+  $fallback = ['action' => 'filter_edges', 'params' => ['work_id' => $workId, 'edge_type' => null]];
+
+  if ($action === 'get_neighbors') {
+    $cand = $params['center_node'] ?? null;
+    if (!is_string($cand) || !in_array($cand, $allowedLabels, true)) {
+      // 実在しない中心ノード＝ハルシネーション。採用せず全体表示に落とす（本体データは汚さない）。
+      if (is_string($cand) && $cand !== '') {
+        error_log('query_llm: AI returned unknown center_node; fell back to filter_edges(all).');
+      }
+      return $fallback;
+    }
+    // max_depth を 1〜4 にクランプ（QueryBuilder 側でも再クランプされる）
+    $depth = filter_var($params['max_depth'] ?? 1, FILTER_VALIDATE_INT);
+    if ($depth === false || $depth < 1) {
+      $depth = 1;
+    } elseif ($depth > 4) {
+      $depth = 4;
+    }
+    return ['action' => 'get_neighbors',
+            'params' => ['work_id' => $workId, 'center_node' => $cand, 'max_depth' => $depth]];
+  }
+
+  // それ以外はすべて filter_edges として扱う（未知 action もここへ丸める）
+  $edgeType = null;
+  $cand = $params['edge_type'] ?? null;
+  if (is_string($cand) && in_array($cand, $allowedTypes, true)) {
+    $edgeType = $cand;
+  } elseif (is_string($cand) && $cand !== '') {
+    // 実在しない種別をAIが返した＝ハルシネーション。採用せず記録のみ。
+    error_log('query_llm: AI returned unknown edge_type; coerced to null.');
+  }
+  return ['action' => 'filter_edges', 'params' => ['work_id' => $workId, 'edge_type' => $edgeType]];
 }
 
 // ------------------------------------------------------------
