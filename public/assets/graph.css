@@ -84,6 +84,62 @@
 }
 .query-status.error { color: #c53030; }
 
+/* ============================================================
+   テーマ別グルーピング（Issue #8）
+     ・検索窓の下に重ねて表示。AI生成→案を選ぶと破線オーバーレイで重ねる。
+     ・二次データ（AI解釈）のUI。本体データ（事実）は書き換えない（ADR-004/006）。
+   ============================================================ */
+.grouping-bar {
+  position: absolute;
+  top: 4.4rem;               /* 検索窓（query-bar）の下に配置 */
+  left: 1rem;
+  right: 1rem;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  background: rgba(249, 245, 255, .95);   /* 二次データ＝薄紫系で一次データUIと区別 */
+  border: 1px solid #e2d6f0;
+  border-radius: 6px;
+  padding: .5rem .7rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  z-index: 5;
+}
+
+.grouping-select-label {
+  font-size: .82rem;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}
+
+.grouping-select {
+  font-size: .82rem;
+  padding: .3rem .4rem;
+  border: 1px solid #cbb8e0;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  max-width: 220px;
+}
+.grouping-select:disabled { opacity: .55; }
+
+/* 選択中の案の「テーマ名＋分類基準の説明」。幅いっぱいで折り返す */
+.grouping-desc {
+  flex: 1 1 100%;
+  margin: .2rem 0 0;
+  font-size: .78rem;
+  color: #5b4a73;
+  line-height: 1.5;
+  max-height: 8.5rem;
+  overflow-y: auto;
+}
+.grouping-desc[hidden] { display: none; }
+.grouping-desc-line { margin: .15rem 0; }
+.grouping-desc-line strong { color: #6b46a3; }
+
 /* 凡例（レジェンド）。グラフの右下に固定表示する */
 .legend {
   position: absolute;
@@ -145,6 +201,14 @@
 .legend-dot.person { background: #4c8bf5; }
 .legend-dot.place  { background: #56b877; }
 .legend-dot.other  { background: #999999; }
+
+/* AIが付けたテーマの拠点（◇）。グラフ上の菱形ノードに対応（二次データ・破線枠） */
+.legend-dot.group {
+  border-radius: 2px;
+  background: #efe6fa;
+  border: 1px dashed #b08fd6;
+  transform: rotate(45deg);
+}
 
 /* ============================================================
    ノード詳細サイドパネル（Issue #6）
