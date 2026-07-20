@@ -83,11 +83,40 @@
         }
       },
       {
-        // 二次データ（AI解釈）のエッジ = 破線。#8 で llm_groupings を描く際に使う（今は要素なし）
+        // 二次データ（AI解釈）のエッジ = 破線／別色（ADR-004）。
+        //   グループ拠点ノード → 所属ノード を結ぶ。太さは一定・種別ラベルは出さない
+        //   （事実の関係ではないので weight/edge_type を持たない）。
         selector: 'edge[provenance = "secondary"]',
         style: {
           'line-style': 'dashed',
-          'line-color': '#b08fd6'
+          'line-color': '#b08fd6',
+          'width': 2,
+          'label': '',
+          'curve-style': 'straight',
+          'opacity': 0.85
+        }
+      },
+      {
+        // 二次データ（AI解釈）のグループ拠点ノード = ◇（菱形・別色・破線枠）。
+        //   AIが付けたテーマ名を表す。一次データ（人物/場所の●）と一目で区別できる形にする。
+        selector: 'node[?is_group]',
+        style: {
+          'shape': 'diamond',
+          'background-color': '#efe6fa',
+          'background-opacity': 0.9,
+          'border-width': 2,
+          'border-style': 'dashed',
+          'border-color': '#b08fd6',
+          'label': 'data(label)',
+          'color': '#6b46a3',
+          'font-size': '11px',
+          'font-weight': 'bold',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'text-margin-y': 0,
+          'width': 42,
+          'height': 42,
+          'min-zoomed-font-size': 6
         }
       }
     ];
@@ -305,7 +334,9 @@
     });
 
     // ノードをタップ→詳細サイドパネルを表示（Issue #6）
+    //   ★グループ拠点（二次データ・AI解釈）は本体ノードではないので詳細取得しない（Issue #8）。
     cy.on('tap', 'node', function (evt) {
+      if (evt.target.data('is_group')) return;
       loadNodeDetail(evt.target.id());
     });
 
@@ -318,6 +349,10 @@
 
     // グローバルに公開しておくと後続 issue（#6 クリック→詳細）から参照しやすい
     window.cy = cy;
+
+    // グラフを作り直したら、前のグルーピング・オーバーレイは消えている。
+    // 選択状態（案）だけリセットする（案の一覧は残し、ユーザーが再適用できる）。Issue #8
+    resetGroupingSelection();
   }
 
   // ------------------------------------------------------------
@@ -443,6 +478,217 @@
     });
   }
 
+  // ------------------------------------------------------------
+  // テーマ別グルーピング（Issue #8）
+  //   ・「テーマ別に分類」→ groupings_llm.php（AIが複数案を生成＋ llm_groupings に保存）
+  //   ・案を選ぶ → その案を「グループ拠点ノード＋破線エッジ」で本体グラフに重ねる（オーバーレイ）。
+  //   ★二次データ（AI解釈）は破線／別色。一次データ（実線＝事実）とは別レイヤーで、本体は書き換えない。
+  //     オーバーレイ要素には class 'grouping-overlay' を付け、まとめて着脱する。
+  //   ・ページ再読込時は groupings_data.php で保存済みの案を復元（AIを再度叩かない＝無駄な課金をしない）。
+  // ------------------------------------------------------------
+  var groupingRunEl    = document.getElementById('grouping-run');
+  var groupingSelectEl = document.getElementById('grouping-select');
+  var groupingClearEl  = document.getElementById('grouping-clear');
+  var groupingStatusEl = document.getElementById('grouping-status');
+  var groupingDescEl   = document.getElementById('grouping-desc');
+
+  // 直近に取得した案（proposal_set 昇順）。select の value はこの配列の添字。
+  var currentProposals = [];
+
+  function setGroupingStatus(text, isError) {
+    if (!groupingStatusEl) return;
+    groupingStatusEl.textContent = text || '';
+    groupingStatusEl.classList.toggle('error', !!isError);
+  }
+
+  // 本体グラフに重ねた二次データ（拠点ノード＋破線エッジ）を取り除く。
+  function clearGroupingOverlay() {
+    if (window.cy) {
+      try { window.cy.remove('.grouping-overlay'); } catch (e) { /* 破棄失敗は無視 */ }
+    }
+    if (groupingDescEl) {
+      groupingDescEl.hidden = true;
+      groupingDescEl.textContent = '';
+    }
+    if (groupingClearEl) groupingClearEl.disabled = true;
+  }
+
+  // 案の「選択」だけリセットする（案一覧 currentProposals は保持）。
+  // グラフ再描画（フィルタ/全体表示）でオーバーレイが消えたときに呼ぶ。
+  function resetGroupingSelection() {
+    if (groupingSelectEl) groupingSelectEl.value = '';
+    clearGroupingOverlay();
+  }
+
+  // 選択中の案を、本体グラフに破線オーバーレイとして重ねる。
+  //   ・各グループごとに「拠点ノード（◇）」を1つ足し、所属ノードへ破線エッジを張る。
+  //   ・拠点は所属ノードの重心へ置く（クラスタの中心に出る）。
+  //   ・現在のグラフに存在しないノード（フィルタで消えている等）はスキップ（安全側）。
+  function applyProposalOverlay(proposal) {
+    if (!window.cy || !proposal) return;
+    var cy = window.cy;
+    clearGroupingOverlay();
+
+    var groups = proposal.groups || [];
+    var descFrag = document.createDocumentFragment();
+    var drewAny = false;
+
+    groups.forEach(function (g, gi) {
+      // このグループの所属ノードのうち、今のグラフに実在するものだけ集める
+      var members = [];
+      (g.node_ids || []).forEach(function (nid) {
+        var el = cy.getElementById(String(nid));
+        if (el && el.length > 0 && !el.data('is_group')) members.push(el);
+      });
+      if (members.length === 0) return;   // 表示中に所属ノードが無い→この拠点は描かない
+
+      // 所属ノードの重心を拠点の初期位置にする
+      var sx = 0, sy = 0;
+      members.forEach(function (el) { var p = el.position(); sx += p.x; sy += p.y; });
+      var hubId = 'grp_' + proposal.proposal_set + '_' + gi;
+
+      cy.add({
+        group: 'nodes',
+        data: { id: hubId, label: g.group_label, is_group: 1 },
+        position: { x: sx / members.length, y: sy / members.length },
+        classes: 'grouping-overlay'
+      });
+      members.forEach(function (el) {
+        cy.add({
+          group: 'edges',
+          data: { id: hubId + '_' + el.id(), source: hubId, target: el.id(), provenance: 'secondary' },
+          classes: 'grouping-overlay'
+        });
+      });
+      drewAny = true;
+
+      // 凡例下の説明（テーマ名＋分類基準）
+      var line = document.createElement('div');
+      line.className = 'grouping-desc-line';
+      var strong = document.createElement('strong');
+      strong.textContent = g.group_label;
+      line.appendChild(strong);
+      if (g.description) {
+        line.appendChild(document.createTextNode('：' + g.description));
+      }
+      descFrag.appendChild(line);
+    });
+
+    if (groupingDescEl) {
+      groupingDescEl.textContent = '';
+      if (drewAny) {
+        groupingDescEl.appendChild(descFrag);
+        groupingDescEl.hidden = false;
+      } else {
+        groupingDescEl.hidden = true;
+      }
+    }
+    if (groupingClearEl) groupingClearEl.disabled = !drewAny;
+
+    if (!drewAny) {
+      setGroupingStatus('この表示に該当するノードがありません（全体表示で試してください）。', false);
+    }
+  }
+
+  // 案の配列で select を組み立て直す（本体データには一切影響しない）。
+  function populateProposalSelect(proposals) {
+    currentProposals = Array.isArray(proposals) ? proposals : [];
+    if (!groupingSelectEl) return;
+
+    groupingSelectEl.textContent = '';
+    var optNone = document.createElement('option');
+    optNone.value = '';
+    optNone.textContent = (currentProposals.length > 0) ? '（適用なし）' : '（未生成）';
+    groupingSelectEl.appendChild(optNone);
+
+    currentProposals.forEach(function (p, idx) {
+      var opt = document.createElement('option');
+      opt.value = String(idx);
+      var groupCount = (p.groups || []).length;
+      opt.textContent = '案' + (p.proposal_set || (idx + 1)) + '（' + groupCount + 'グループ）';
+      groupingSelectEl.appendChild(opt);
+    });
+
+    groupingSelectEl.disabled = (currentProposals.length === 0);
+  }
+
+  // 保存済みの案を取得して select に反映（初回表示・work切替時）。AIは呼ばない。
+  function loadGroupings() {
+    var url = 'groupings_data.php';
+    if (currentWorkId !== null && currentWorkId !== undefined) {
+      url += '?work_id=' + encodeURIComponent(currentWorkId);
+    }
+    fetch(url, {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function (res) {
+        if (res.status === 401) { window.location.href = 'login.php'; return null; }
+        if (!res.ok) throw new Error('groupings_data.php returned HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (data === null) return;
+        populateProposalSelect(data.proposals || []);
+      })
+      .catch(function (err) {
+        console.error('グルーピングの取得に失敗しました:', err);
+      });
+  }
+
+  // 「テーマ別に分類（AI）」ボタン：groupings_llm.php で生成＋保存し、案を反映する。
+  function runGrouping() {
+    if (groupingRunEl) groupingRunEl.disabled = true;
+    setGroupingStatus('AIがテーマ別に分類中…', false);
+
+    fetch('groupings_llm.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ work_id: currentWorkId })
+    })
+      .then(handleApiResponse)   // 401誘導・エラーメッセージ化は #7 と共通
+      .then(function (data) {
+        if (data === null) return;   // 401でリダイレクト済み
+        var proposals = data.proposals || [];
+        populateProposalSelect(proposals);
+        resetGroupingSelection();
+        if (proposals.length > 0) {
+          setGroupingStatus(proposals.length + '件の分類案を生成しました。案を選んで重ねて表示できます。', false);
+        } else {
+          setGroupingStatus('有効な分類案が得られませんでした。', true);
+        }
+      })
+      .catch(function (err) {
+        console.error('テーマ別グルーピングに失敗しました:', err);
+        setGroupingStatus(err.userMessage || 'エラーが発生しました。', true);
+      })
+      .then(function () {
+        if (groupingRunEl) groupingRunEl.disabled = false;
+      });
+  }
+
+  if (groupingRunEl) {
+    groupingRunEl.addEventListener('click', runGrouping);
+  }
+  if (groupingSelectEl) {
+    groupingSelectEl.addEventListener('change', function () {
+      var v = groupingSelectEl.value;
+      if (v === '') {
+        clearGroupingOverlay();
+        return;
+      }
+      var proposal = currentProposals[parseInt(v, 10)];
+      applyProposalOverlay(proposal);
+    });
+  }
+  if (groupingClearEl) {
+    groupingClearEl.addEventListener('click', function () {
+      if (groupingSelectEl) groupingSelectEl.value = '';
+      clearGroupingOverlay();
+    });
+  }
+
   // --- graph_data.php を取得して描画（初回表示・全体表示に戻す 共通） ---
   function loadInitialGraph() {
     showMessage('読み込み中…');
@@ -467,6 +713,8 @@
         currentWorkId = (data && data.work_id !== undefined) ? data.work_id : null;
         var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
         renderGraph(elements);
+        // 保存済みのテーマ別グルーピング案を復元（Issue #8。AIは呼ばない）
+        loadGroupings();
       })
       .catch(function (err) {
         // 通信・パース失敗。詳細はコンソールへ、画面には簡潔なメッセージのみ。
