@@ -198,8 +198,10 @@
   flex: 0 0 auto;
 }
 
+.legend-dot.narrator { background: #e0a458; }
 .legend-dot.person { background: #4c8bf5; }
 .legend-dot.place  { background: #56b877; }
+.legend-dot.term   { background: #999999; }
 .legend-dot.other  { background: #999999; }
 
 /* AIが付けたテーマの拠点（◇）。グラフ上の菱形ノードに対応（二次データ・破線枠） */

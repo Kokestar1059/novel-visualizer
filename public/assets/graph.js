@@ -38,8 +38,9 @@
 
   // node_type → 色（凡例と対応。未知の種別は other 色）
   var NODE_COLORS = {
-    person: '#4c8bf5',
-    place:  '#56b877'
+    narrator: '#e0a458',   // 語り手「私」（物語全体と共起するため別枠で明示）
+    person:   '#4c8bf5',
+    place:    '#56b877'
   };
   var NODE_COLOR_OTHER = '#999999';
 
@@ -72,7 +73,7 @@
           'width': 'mapData(weight, 0, 1, 1, 6)',
           'line-color': '#9a9a9a',
           'curve-style': 'bezier',
-          'label': 'data(edge_type)',
+          'label': '',
           'font-size': '9px',
           'color': '#777',
           'text-rotation': 'autorotate',

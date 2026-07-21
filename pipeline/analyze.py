@@ -150,7 +150,10 @@ def build_entries():
     """
     entries = []
     for surface, label in PERSON_DICT.items():
-        entries.append((surface, label, "person"))
+        # 語り手「私」は物語全体と共起して無差別ハブになるため、別種別 narrator として区別する
+        #   （削除せず「観察者＝語り手」であることを図・凡例で明示するため）。
+        ntype = "narrator" if label == "私" else "person"
+        entries.append((surface, label, ntype))
     for surface, label in PLACE_DICT.items():
         entries.append((surface, label, "place"))
     for surface, label in ACTANT_DICT.items():
