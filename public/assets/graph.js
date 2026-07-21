@@ -38,11 +38,12 @@
 
   // node_type → 色（凡例と対応。未知の種別は other 色）
   var NODE_COLORS = {
-    narrator: '#e0a458',   // 語り手「私」（物語全体と共起するため別枠で明示）
-    person:   '#4c8bf5',
-    place:    '#56b877'
+    narrator: '#c8922f',   // 語り手「私」＝琥珀（全体と共起するため別枠で明示）
+    person:   '#3a5a8c',   // 人物＝藍
+    place:    '#5d8a72',   // 場所＝緑青
+    term:     '#8a8175'    // アクタント（物・出来事・主題）＝墨taupe
   };
-  var NODE_COLOR_OTHER = '#999999';
+  var NODE_COLOR_OTHER = '#8a8175';
 
   // Cytoscape のスタイル定義
   function buildStyle() {
@@ -53,16 +54,33 @@
           'background-color': function (ele) {
             return NODE_COLORS[ele.data('node_type')] || NODE_COLOR_OTHER;
           },
+          // 紙地からノードを浮かせる淡い縁取り
+          'border-width': 1.5,
+          'border-color': '#f4f1ea',
+          'border-opacity': 0.9,
           'label': 'data(label)',
-          'color': '#333',
+          'font-family': '"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif',
+          'color': '#3a352f',
           'font-size': '11px',
           'text-valign': 'bottom',
           'text-halign': 'center',
-          'text-margin-y': 3,
+          'text-margin-y': 4,
+          // 紙地でも読めるよう文字に薄い縁取り
+          'text-outline-color': '#f4f1ea',
+          'text-outline-width': 2,
           // frequency（出現頻度）でノードの大きさを変える。値が無くても最小サイズは確保
-          'width':  'mapData(frequency, 0, 30, 18, 55)',
-          'height': 'mapData(frequency, 0, 30, 18, 55)',
-          'min-zoomed-font-size': 6
+          'width':  'mapData(frequency, 0, 30, 18, 56)',
+          'height': 'mapData(frequency, 0, 30, 18, 56)',
+          'min-zoomed-font-size': 7
+        }
+      },
+      {
+        // クリック選択時のハイライト（藍）
+        selector: 'node:selected',
+        style: {
+          'border-width': 3,
+          'border-color': '#2f3d5c',
+          'border-opacity': 1
         }
       },
       {
@@ -70,18 +88,18 @@
         selector: 'edge',
         style: {
           'line-style': 'solid',
-          'width': 'mapData(weight, 0, 1, 1, 6)',
-          'line-color': '#9a9a9a',
+          // weight（Dice）は概ね0〜0.3に分布。この範囲で太さの差を効かせる
+          'width': 'mapData(weight, 0, 0.3, 0.8, 5)',
+          'line-color': '#bcb4a6',
+          'opacity': 0.72,
           'curve-style': 'bezier',
           'label': '',
-          'font-size': '9px',
-          'color': '#777',
-          'text-rotation': 'autorotate',
-          'text-background-color': '#fafafa',
-          'text-background-opacity': 0.8,
-          'text-background-padding': 1,
           'min-zoomed-font-size': 6
         }
+      },
+      {
+        selector: 'edge:selected',
+        style: { 'line-color': '#2f3d5c', 'opacity': 1, 'width': 3 }
       },
       {
         // 二次データ（AI解釈）のエッジ = 破線／別色（ADR-004）。

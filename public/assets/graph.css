@@ -1,16 +1,62 @@
 /* ============================================================
-   graph.css — グラフ表示画面（index.php）のスタイル
-     出典: idea.md §9 / Issue #5
-     ・#cy をビューポートいっぱいに広げてネットワーク図を描く
-     ・凡例（レジェンド）で「実線＝統計的抽出／破線＝AI解釈」を常時表示（ADR-004）
+   graph.css — 「こころ、図解」画面スタイル
+     デザイン方針: 「墨・紙・藍」— 明治文学の内省性を、余白の効いた
+     ミニマルな研究ツールとして。明朝の見出し＋端正なsans本文、藍のアクセント、
+     繊細な影と hairline 罫線。機能・描画ロジックには影響しない見た目のみ。
    ============================================================ */
 
-/* グラフ描画領域。ヘッダ（約 3.2rem）を除いた高さを確保する */
+:root {
+  /* 地色・面 */
+  --paper:      #f4f1ea;   /* 和紙の地色 */
+  --paper-edge: #ebe6db;
+  --surface:    #fffefb;   /* カード（温白） */
+  --surface-2:  #faf7f1;
+
+  /* 墨（テキスト） */
+  --ink:        #232026;
+  --ink-soft:   #5f5a54;
+  --ink-faint:  #948d82;
+
+  /* 罫線 */
+  --line:       #e5ded1;
+  --line-soft:  #efe9de;
+
+  /* 藍（アクセント）・朱（差し色） */
+  --indigo:     #2f3d5c;
+  --indigo-600: #3b4d72;
+  --indigo-050: #edeff4;
+  --vermilion:  #b24a34;
+
+  /* ノード種別カラー（凡例と一致） */
+  --node-narrator: #c8922f;
+  --node-person:   #3a5a8c;
+  --node-place:    #5d8a72;
+  --node-term:     #8a8175;
+
+  /* 形 */
+  --radius:   11px;
+  --radius-s: 7px;
+  --shadow:   0 8px 28px -12px rgba(35,32,38,.22), 0 1px 2px rgba(35,32,38,.05);
+  --shadow-s: 0 2px 10px -4px rgba(35,32,38,.18);
+  --ring:     0 0 0 3px rgba(47,61,92,.14);
+
+  /* タイポ */
+  --font-mincho: "Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --font-sans:   "Hiragino Sans","Yu Gothic","YuGothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+
+  --header-h: 4.4rem;
+}
+
+/* ============================================================
+   グラフ描画領域
+   ============================================================ */
 #cy {
   width: 100%;
-  height: calc(100vh - 3.2rem);
+  height: calc(100vh - var(--header-h));
   display: block;
-  background: #fafafa;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255,255,255,.55), transparent 45%),
+    var(--paper);
 }
 
 /* データが無いとき／読込中に #cy へ重ねて出すメッセージ */
@@ -19,326 +65,275 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #888;
+  color: var(--ink-faint);
+  font-family: var(--font-sans);
   font-size: .95rem;
+  letter-spacing: .02em;
   pointer-events: none;
 }
 
 /* ============================================================
-   自然言語フィルタの検索窓（Issue #7）
-     ・グラフ左上に重ねて表示。入力→AI翻訳→DB実行→再描画。
-     ・status 行に「解釈結果（例: 『恋慕』で絞り込み）」やエラーを表示する。
+   自然言語フィルタ（検索窓）
    ============================================================ */
 .query-bar {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  right: 1rem;
-  max-width: 640px;
+  top: 1.1rem;
+  left: 1.1rem;
+  right: 1.1rem;
+  max-width: 560px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: .5rem;
-  background: rgba(255, 255, 255, .94);
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: .55rem .7rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .7rem .8rem;
+  box-shadow: var(--shadow);
   z-index: 5;
 }
 
 .query-text {
   flex: 1 1 240px;
   min-width: 160px;
+  font-family: var(--font-sans);
   font-size: .9rem;
-  padding: .4rem .55rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
+  color: var(--ink);
+  padding: .5rem .65rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+}
+.query-text::placeholder { color: var(--ink-faint); }
+.query-text:focus {
+  outline: none;
+  border-color: var(--indigo-600);
+  box-shadow: var(--ring);
 }
 
 .query-btn {
-  font-size: .85rem;
-  padding: .4rem .8rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
+  font-family: var(--font-sans);
+  font-size: .84rem;
+  letter-spacing: .02em;
+  padding: .5rem .9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--ink-soft);
   cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s, transform .06s;
 }
-.query-btn:hover { background: #f2f5f9; }
+.query-btn:hover { background: var(--surface-2); border-color: #d9d2c4; }
+.query-btn:active { transform: translateY(1px); }
 .query-btn.primary {
-  background: #2b6cb0;
-  border-color: #2b6cb0;
-  color: #fff;
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fbfaf7;
+  box-shadow: 0 2px 8px -3px rgba(47,61,92,.5);
 }
-.query-btn.primary:hover { background: #255a94; }
-.query-btn:disabled { opacity: .55; cursor: default; }
+.query-btn.primary:hover { background: var(--indigo-600); border-color: var(--indigo-600); }
+.query-btn:disabled { opacity: .45; cursor: default; transform: none; }
 
-/* 解釈結果・エラーの表示行（幅いっぱいで折り返す） */
+/* 解釈結果・エラーの表示行 */
 .query-status {
   flex: 1 1 100%;
+  font-family: var(--font-sans);
   font-size: .78rem;
-  color: #666;
+  color: var(--ink-soft);
   min-height: 1em;
+  letter-spacing: .01em;
 }
-.query-status.error { color: #c53030; }
+.query-status.error { color: var(--vermilion); }
 
 /* ============================================================
-   テーマ別グルーピング（Issue #8）
-     ・検索窓の下に重ねて表示。AI生成→案を選ぶと破線オーバーレイで重ねる。
-     ・二次データ（AI解釈）のUI。本体データ（事実）は書き換えない（ADR-004/006）。
+   凡例（レジェンド）
    ============================================================ */
-.grouping-bar {
-  position: absolute;
-  top: 4.4rem;               /* 検索窓（query-bar）の下に配置 */
-  left: 1rem;
-  right: 1rem;
-  max-width: 640px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: .5rem;
-  background: rgba(249, 245, 255, .95);   /* 二次データ＝薄紫系で一次データUIと区別 */
-  border: 1px solid #e2d6f0;
-  border-radius: 6px;
-  padding: .5rem .7rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
-  z-index: 5;
-}
-
-.grouping-select-label {
-  font-size: .82rem;
-  color: #555;
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-}
-
-.grouping-select {
-  font-size: .82rem;
-  padding: .3rem .4rem;
-  border: 1px solid #cbb8e0;
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
-  max-width: 220px;
-}
-.grouping-select:disabled { opacity: .55; }
-
-/* 選択中の案の「テーマ名＋分類基準の説明」。幅いっぱいで折り返す */
-.grouping-desc {
-  flex: 1 1 100%;
-  margin: .2rem 0 0;
-  font-size: .78rem;
-  color: #5b4a73;
-  line-height: 1.5;
-  max-height: 8.5rem;
-  overflow-y: auto;
-}
-.grouping-desc[hidden] { display: none; }
-.grouping-desc-line { margin: .15rem 0; }
-.grouping-desc-line strong { color: #6b46a3; }
-
-/* 凡例（レジェンド）。グラフの右下に固定表示する */
 .legend {
   position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  background: rgba(255, 255, 255, .92);
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: .7rem .9rem;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .85rem 1rem;
+  font-family: var(--font-sans);
   font-size: .8rem;
-  color: #333;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
-  line-height: 1.5;
+  color: var(--ink-soft);
+  box-shadow: var(--shadow);
+  line-height: 1.55;
 }
 
 .legend h2 {
-  font-size: .8rem;
-  margin: 0 0 .5rem;
-  color: #555;
+  font-family: var(--font-mincho);
+  font-size: .82rem;
+  margin: 0 0 .55rem;
+  color: var(--ink);
   font-weight: 600;
+  letter-spacing: .06em;
 }
 
 .legend-row {
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: .55rem;
+  margin: .12rem 0;
 }
 
-/* 凡例の線サンプル。一次＝実線／二次＝破線 を視覚的に示す（ADR-004） */
+/* 凡例の線サンプル（実線＝共起） */
 .legend-line {
   display: inline-block;
-  width: 28px;
+  width: 26px;
   height: 0;
   flex: 0 0 auto;
 }
+.legend-line.primary   { border-top: 2.5px solid #9c958a; }
+.legend-line.secondary { border-top: 2.5px dashed #b08fd6; }
 
-.legend-line.primary {
-  border-top: 3px solid #7a7a7a;   /* 実線＝統計的抽出（事実） */
-}
+.legend-row.pending { color: var(--ink-faint); }
 
-.legend-line.secondary {
-  border-top: 3px dashed #b08fd6;  /* 破線＝AI解釈（#8で描画予定） */
-}
-
-/* まだ描画対象が無い凡例項目はグレーで「今後」と示す */
-.legend-row.pending {
-  color: #aaa;
-}
-
-/* ノード種別（node_type）の色サンプル */
+/* ノード種別の色サンプル */
 .legend-dot {
   display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
   flex: 0 0 auto;
+  box-shadow: 0 0 0 2px var(--surface), 0 1px 2px rgba(0,0,0,.12);
 }
-
-.legend-dot.narrator { background: #e0a458; }
-.legend-dot.person { background: #4c8bf5; }
-.legend-dot.place  { background: #56b877; }
-.legend-dot.term   { background: #999999; }
-.legend-dot.other  { background: #999999; }
-
-/* AIが付けたテーマの拠点（◇）。グラフ上の菱形ノードに対応（二次データ・破線枠） */
+.legend-dot.narrator { background: var(--node-narrator); }
+.legend-dot.person   { background: var(--node-person); }
+.legend-dot.place    { background: var(--node-place); }
+.legend-dot.term     { background: var(--node-term); }
+.legend-dot.other    { background: var(--node-term); }
 .legend-dot.group {
   border-radius: 2px;
   background: #efe6fa;
   border: 1px dashed #b08fd6;
   transform: rotate(45deg);
+  box-shadow: none;
 }
 
 /* ============================================================
-   ノード詳細サイドパネル（Issue #6）
-     ・ノードクリックで右側にスライドイン。隣接ノードとエビデンス原文を表示。
-     ・エビデンスは原文＋文番号・位置を併記し、抽出箇所を <mark> でハイライト（ADR-003）。
+   ノード詳細サイドパネル
    ============================================================ */
 .node-panel {
   position: absolute;
   top: 0;
   right: 0;
-  width: 340px;
-  max-width: 85vw;
-  height: calc(100vh - 3.2rem);
+  width: 360px;
+  max-width: 88vw;
+  height: calc(100vh - var(--header-h));
   box-sizing: border-box;
-  background: #fff;
-  border-left: 1px solid #ddd;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, .08);
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: -12px 0 30px -18px rgba(35,32,38,.3);
   overflow-y: auto;
-  padding: 0 1rem 1.2rem;
+  padding: 0 1.1rem 1.3rem;
+  font-family: var(--font-sans);
   font-size: .85rem;
-  color: #333;
+  color: var(--ink);
+  animation: panel-in .22s ease;
 }
+@keyframes panel-in { from { transform: translateX(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* hidden 属性が付いている間は非表示（初期状態・閉じたとき） */
 .node-panel[hidden] { display: none; }
 
 .node-panel-head {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: linear-gradient(var(--surface), var(--surface) 78%, transparent);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: .8rem 0 .5rem;
-  border-bottom: 1px solid #eee;
+  padding: .95rem 0 .6rem;
+  border-bottom: 1px solid var(--line-soft);
 }
-
 .node-panel-head h2 {
-  font-size: 1rem;
+  font-family: var(--font-mincho);
+  font-size: 1.15rem;
   margin: 0;
-  color: #2b6cb0;
+  color: var(--ink);
+  letter-spacing: .04em;
   word-break: break-all;
 }
 
 .node-panel-close {
   border: none;
   background: transparent;
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   line-height: 1;
-  color: #888;
+  color: var(--ink-faint);
   cursor: pointer;
   padding: 0 .2rem;
+  transition: color .15s;
 }
-.node-panel-close:hover { color: #333; }
+.node-panel-close:hover { color: var(--ink); }
 
-/* クリックしたノード自身のメタ情報（種別・頻度） */
-.node-panel-meta {
-  color: #666;
-  margin: .6rem 0 1rem;
-}
+.node-panel-meta { color: var(--ink-soft); margin: .65rem 0 1rem; }
 
 .node-panel-section-title {
-  font-size: .8rem;
+  font-family: var(--font-mincho);
+  font-size: .84rem;
   font-weight: 600;
-  color: #555;
-  margin: 1rem 0 .5rem;
+  color: var(--ink);
+  letter-spacing: .05em;
+  margin: 1.2rem 0 .55rem;
+  padding-bottom: .3rem;
+  border-bottom: 1px solid var(--line-soft);
 }
 
-/* 隣接ノード1件（エッジ＋相手ノード＋エビデンス）のカード */
+/* 隣接ノード1件のカード */
 .neighbor {
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: .6rem .7rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  padding: .65rem .75rem;
   margin-bottom: .7rem;
-  background: #fcfcfc;
+  background: var(--surface-2);
+  transition: box-shadow .15s, border-color .15s;
 }
+.neighbor:hover { box-shadow: var(--shadow-s); border-color: var(--line); }
 
 .neighbor-head {
   display: flex;
   align-items: center;
-  gap: .4rem;
+  gap: .45rem;
   flex-wrap: wrap;
   margin-bottom: .4rem;
 }
+.neighbor-name { font-weight: 600; color: var(--ink); }
+.neighbor-dir { font-size: .7rem; color: var(--ink-faint); }
 
-.neighbor-name { font-weight: 600; }
-
-/* 関係の向き（out＝起点／in＝終点）を小さく示す矢印バッジ */
-.neighbor-dir {
-  font-size: .7rem;
-  color: #888;
-}
-
-/* エッジ種別バッジ */
 .neighbor-type {
   font-size: .72rem;
-  background: #eef2f8;
-  color: #2b6cb0;
-  border-radius: 4px;
-  padding: .05rem .4rem;
+  background: var(--indigo-050);
+  color: var(--indigo);
+  border-radius: 999px;
+  padding: .08rem .5rem;
+  letter-spacing: .02em;
 }
+.neighbor-weight { font-size: .72rem; color: var(--ink-faint); }
 
-.neighbor-weight { font-size: .72rem; color: #999; }
-
-/* エビデンス原文ブロック（検証用。原文＋文番号・位置） */
+/* エビデンス原文ブロック */
 .evidence {
-  border-left: 3px solid #cbd5e0;
-  padding: .3rem 0 .3rem .6rem;
-  margin: .4rem 0 0;
+  border-left: 2px solid var(--indigo-050);
+  padding: .3rem 0 .3rem .65rem;
+  margin: .45rem 0 0;
 }
-
-.evidence-text {
-  line-height: 1.6;
-  color: #222;
-}
-
-/* 抽出箇所のハイライト（ADR-003 検証可能性） */
+.evidence-text { line-height: 1.75; color: var(--ink); font-size: .84rem; }
 .evidence-text mark {
-  background: #fde68a;
-  padding: 0 .05em;
+  background: #f3e2b8;
+  color: inherit;
+  padding: 0 .08em;
   border-radius: 2px;
 }
+.evidence-meta { font-size: .72rem; color: var(--ink-faint); margin-top: .25rem; }
 
-/* 文番号・位置などのメタ情報 */
-.evidence-meta {
-  font-size: .72rem;
-  color: #999;
-  margin-top: .2rem;
-}
-
-.node-panel-empty { color: #999; margin-top: 1rem; }
+.node-panel-empty { color: var(--ink-faint); margin-top: 1rem; }

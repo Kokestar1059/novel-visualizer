@@ -23,24 +23,59 @@ $hasError = isset($_GET['err']);
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ログイン — novel-visualizer</title>
+  <title>ログイン — こころ、図解</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #f4f5f7; margin: 0; }
-    .box { max-width: 360px; margin: 10vh auto; background: #fff; padding: 2rem;
-           border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-    h1 { font-size: 1.2rem; margin: 0 0 1.2rem; }
-    label { display: block; font-size: .85rem; margin: .8rem 0 .3rem; color: #444; }
-    input[type=text], input[type=password] { width: 100%; padding: .5rem;
-           border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    button { width: 100%; margin-top: 1.4rem; padding: .6rem; border: 0;
-             border-radius: 4px; background: #2b6cb0; color: #fff; font-size: 1rem;
-             cursor: pointer; }
-    .err { color: #c53030; font-size: .85rem; margin-top: .8rem; }
+    :root {
+      --paper: #f4f1ea; --surface: #fffefb; --ink: #232026; --ink-soft: #5f5a54;
+      --ink-faint: #948d82; --line: #e5ded1; --indigo: #2f3d5c; --indigo-600: #3b4d72;
+      --vermilion: #b24a34;
+      --mincho: "Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+      --sans: "Hiragino Sans","Yu Gothic","YuGothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+    }
+    body {
+      font-family: var(--sans); color: var(--ink); margin: 0; min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255,255,255,.6), transparent 42%),
+        var(--paper);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .box {
+      width: 360px; max-width: calc(100vw - 2.4rem);
+      background: var(--surface); padding: 2.2rem 2rem 2.4rem;
+      border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: 0 18px 50px -20px rgba(35,32,38,.28), 0 1px 2px rgba(35,32,38,.05);
+    }
+    .brand { display: flex; align-items: center; gap: .7rem; margin-bottom: 1.6rem; }
+    .brand-mark { width: 4px; height: 2.4rem; border-radius: 2px; flex: 0 0 auto;
+                  background: linear-gradient(180deg, var(--vermilion), var(--indigo)); }
+    .brand h1 { font-family: var(--mincho); font-size: 1.5rem; margin: 0; letter-spacing: .14em; font-weight: 600; }
+    .brand p { margin: .2rem 0 0; font-size: .72rem; color: var(--ink-faint); letter-spacing: .05em; }
+    label { display: block; font-size: .82rem; margin: .95rem 0 .35rem; color: var(--ink-soft); letter-spacing: .02em; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: .6rem .7rem; font-family: var(--sans); font-size: .95rem; color: var(--ink);
+      background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-sizing: border-box;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus { outline: none; border-color: var(--indigo-600); box-shadow: 0 0 0 3px rgba(47,61,92,.14); }
+    button {
+      width: 100%; margin-top: 1.6rem; padding: .7rem; border: 0; border-radius: 8px;
+      background: var(--indigo); color: #fbfaf7; font-family: var(--sans); font-size: 1rem; letter-spacing: .06em;
+      cursor: pointer; box-shadow: 0 4px 14px -5px rgba(47,61,92,.55); transition: background .15s, transform .06s;
+    }
+    button:hover { background: var(--indigo-600); }
+    button:active { transform: translateY(1px); }
+    .err { color: var(--vermilion); font-size: .84rem; margin-top: .9rem; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>novel-visualizer ログイン</h1>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>こころ、図解</h1>
+        <p>テキストマイニングで読む夏目漱石『こころ』</p>
+      </div>
+    </div>
     <form action="login_act.php" method="post">
       <label for="login_id">ログインID</label>
       <input type="text" id="login_id" name="login_id" autocomplete="username" required autofocus>
