@@ -63,12 +63,38 @@ PLACE_DICT = {
     "東京": "東京",
 }
 
-# term から除外する語（形式名詞・機能語・汎用語）。GiNZAの lemma と照合。
+# term から除外する語（形式名詞・機能語・汎用語・身体部位・時空間）。GiNZAの lemma と照合。
+#   ★方針: 品詞細分（副詞可能名詞・数詞等）で機械的に落としきれない「汎用の一般名詞」を
+#     ここで補完的に弾く。物語上のアクタント（出来事・重要な物）だけを残すのが狙い。
 TERM_STOPWORDS = {
-    "事", "物", "方", "為", "ため", "よう", "の", "もの", "こと", "とき", "時",
-    "中", "上", "下", "内", "際", "点", "ところ", "所", "人", "彼", "彼女",
-    "自分", "何", "誰", "これ", "それ", "あれ", "どれ", "ここ", "そこ", "あそこ",
-    "とき", "うち", "ほう", "はず", "わけ", "つもり", "そう", "みたい",
+    # 形式名詞・機能語
+    "事", "物", "方", "為", "ため", "よう", "の", "もの", "こと", "とき",
+    "ところ", "所", "人", "彼", "彼女", "自分", "何", "誰", "方々",
+    "これ", "それ", "あれ", "どれ", "ここ", "そこ", "あそこ", "うち",
+    "ほう", "はず", "わけ", "つもり", "そう", "みたい", "通り", "以上", "以下",
+    "一つ", "一人", "二人", "三人", "何人", "みんな", "全部", "大抵", "たいてい",
+    # 時空間（副詞可能で拾えないものの補完）
+    "気", "前", "後", "間", "今", "昔", "時", "頃", "際", "点", "中", "上", "下",
+    "内", "外", "先", "元", "度", "回", "例", "他", "側", "奥", "端", "隅",
+    "今日", "昨日", "明日", "朝", "昼", "夜", "晩", "年", "月", "日", "週",
+    "時間", "分", "秒", "瞬間", "最初", "最後", "途中",
+    # 身体部位（アクタントでなく描写語）
+    "顔", "眼", "目", "口", "頭", "手", "足", "声", "胸", "体", "身",
+    "髪", "額", "頬", "唇", "指", "耳", "鼻", "背", "肩", "腕", "膝", "腹", "首",
+    # 凡庸・副詞的な語（頻出だが物語アクタントでない）
+    "言葉", "話", "意味", "様子", "訳", "いっしょ", "仕方", "調子", "向う",
+    "気分", "実", "代り", "平生", "傍", "段々", "同時", "しまい", "念", "感じ", "違い",
+}
+
+# 採用しない名詞の細分（GiNZAのtag。副詞可能名詞＝前・後・間・今 等、数詞・助数詞を弾く）
+TERM_TAG_REJECT = ("副詞可能", "助数詞可能", "数詞", "非自立", "形状詞可能")
+
+# 重要アクタント辞書（開発時に小説を読んで選ぶ＝解釈だが、実行時はAI不使用の決定論・原則OK）。
+#   「頻度は低いが物語上は決定的」なアクタントを、頻度・品詞に関わらず強制採用する（surface一致）。
+#   ＝頻度閾値では拾えない主題（罪・過去・精神・殉死…）を関係図に載せるための人手キュレーション。
+#   ★本文に実在することを確認済みの語のみ（ハルシネーション混入なし）。
+KEY_ACTANTS = {
+    "過去", "罪", "罪悪", "良心", "精神", "明治", "殉死", "自殺", "孤独",
 }
 
 
@@ -144,17 +170,25 @@ def extract_terms(nlp, texts):
     if nlp is None:
         return [set() for _ in texts]
     result = []
+    # person/place/重要アクタント は別経路（surface一致）で採るので、GiNZA側では二重採用しない
     known = set(PERSON_DICT.keys()) | set(PERSON_DICT.values()) \
-        | set(PLACE_DICT.keys()) | set(PLACE_DICT.values())
+        | set(PLACE_DICT.keys()) | set(PLACE_DICT.values()) | KEY_ACTANTS
     known_lower = {s.lower() for s in known}   # 人物Kの小文字lemma("k")等を大小無視で除外
     # nlp.pipe でまとめて解析（決定論・高速）
     for doc in nlp.pipe(texts, batch_size=64):
         labels = set()
         for tok in doc:
-            # 普通名詞・サ変可能名詞のみ（固有名詞は person/place の辞書側に任せる）
-            if not tok.tag_.startswith("名詞"):
+            tag = tok.tag_
+            if not tag.startswith("名詞"):
                 continue
-            if ("普通名詞" not in tok.tag_) and ("サ変" not in tok.tag_):
+            # 採用する名詞: 普通名詞（一般/サ変可能/形状詞可能）と、人名/地名以外の固有名詞（＝物・組織）。
+            #   サ変名詞＝出来事・行為、固有名詞＝作品/組織などの「物」を積極採用（ANTの非人間アクター）。
+            is_common = "普通名詞" in tag
+            is_proper = ("固有名詞" in tag) and ("人名" not in tag) and ("地名" not in tag)
+            if not (is_common or is_proper):
+                continue
+            # 汎用的な名詞細分（副詞可能＝前/後/間/今、数詞・助数詞、非自立）は物語アクタントでないので除外
+            if any(rej in tag for rej in TERM_TAG_REJECT):
                 continue
             lemma = (tok.lemma_ or tok.text).strip()
             if lemma == "" or lemma in TERM_STOPWORDS or lemma in known:
@@ -209,6 +243,13 @@ def build_sentence_nodes(sentences, term_sets):
             node_type.setdefault(label, "place")
             node_freq[label] += cnt
             labels.add(label)
+        # 重要アクタント（辞書・surface一致）。頻度に関わらず後で採用する term として扱う
+        for label in KEY_ACTANTS:
+            c = text.count(label)
+            if c > 0:
+                node_type.setdefault(label, "term")
+                node_freq[label] += c
+                labels.add(label)
         # term（GiNZA）。person/place で既に採られたラベルは type を上書きしない
         for label in terms:
             if label in node_type and node_type[label] in ("person", "place"):
@@ -232,7 +273,8 @@ def build_edges(per_sentence, node_type, node_freq, node_df):
     # --- term をFREQ_MIN で足切り（person/place は残す）— specs §3.3 ---
     keep = set()
     for label, typ in node_type.items():
-        if typ in ("person", "place") or node_freq[label] >= FREQ_MIN:
+        # person/place と重要アクタントは頻度に関わらず残す。他の term は FREQ_MIN で足切り。
+        if typ in ("person", "place") or label in KEY_ACTANTS or node_freq[label] >= FREQ_MIN:
             keep.add(label)
 
     # --- 共起文数と、共起した文idを収集 ---

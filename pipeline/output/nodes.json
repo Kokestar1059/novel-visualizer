@@ -37,795 +37,399 @@
     },
     {
       "ref": "n6",
-      "label": "気",
-      "node_type": "term",
-      "frequency": 174
-    },
-    {
-      "ref": "n7",
       "label": "お嬢さん",
       "node_type": "person",
       "frequency": 168
     },
     {
-      "ref": "n8",
-      "label": "前",
-      "node_type": "term",
-      "frequency": 167
-    },
-    {
-      "ref": "n9",
+      "ref": "n7",
       "label": "母",
       "node_type": "term",
       "frequency": 164
     },
     {
-      "ref": "n10",
-      "label": "顔",
-      "node_type": "term",
-      "frequency": 132
-    },
-    {
-      "ref": "n11",
-      "label": "言葉",
-      "node_type": "term",
-      "frequency": 124
-    },
-    {
-      "ref": "n12",
-      "label": "間",
-      "node_type": "term",
-      "frequency": 120
-    },
-    {
-      "ref": "n13",
-      "label": "眼",
-      "node_type": "term",
-      "frequency": 114
-    },
-    {
-      "ref": "n14",
-      "label": "二人",
-      "node_type": "term",
-      "frequency": 113
-    },
-    {
-      "ref": "n15",
-      "label": "今",
-      "node_type": "term",
-      "frequency": 105
-    },
-    {
-      "ref": "n16",
+      "ref": "n8",
       "label": "心",
       "node_type": "term",
       "frequency": 104
     },
     {
-      "ref": "n17",
-      "label": "通り",
-      "node_type": "term",
-      "frequency": 104
-    },
-    {
-      "ref": "n18",
+      "ref": "n9",
       "label": "妻",
       "node_type": "term",
       "frequency": 97
     },
     {
-      "ref": "n19",
-      "label": "口",
-      "node_type": "term",
-      "frequency": 91
-    },
-    {
-      "ref": "n20",
-      "label": "後",
-      "node_type": "term",
-      "frequency": 84
-    },
-    {
-      "ref": "n21",
+      "ref": "n10",
       "label": "人間",
       "node_type": "term",
       "frequency": 81
     },
     {
-      "ref": "n22",
+      "ref": "n11",
       "label": "女",
       "node_type": "term",
       "frequency": 75
     },
     {
-      "ref": "n23",
+      "ref": "n12",
       "label": "東京",
       "node_type": "place",
       "frequency": 74
     },
     {
-      "ref": "n24",
+      "ref": "n13",
       "label": "宅",
       "node_type": "term",
       "frequency": 73
     },
     {
-      "ref": "n25",
+      "ref": "n14",
       "label": "家",
       "node_type": "term",
       "frequency": 73
     },
     {
-      "ref": "n26",
-      "label": "話",
-      "node_type": "term",
-      "frequency": 73
-    },
-    {
-      "ref": "n27",
+      "ref": "n15",
       "label": "手紙",
       "node_type": "term",
       "frequency": 72
     },
     {
-      "ref": "n28",
-      "label": "頭",
-      "node_type": "term",
-      "frequency": 72
-    },
-    {
-      "ref": "n29",
+      "ref": "n16",
       "label": "叔父",
       "node_type": "term",
       "frequency": 70
     },
     {
-      "ref": "n30",
+      "ref": "n17",
       "label": "室",
       "node_type": "term",
       "frequency": 70
     },
     {
-      "ref": "n31",
-      "label": "日",
-      "node_type": "term",
-      "frequency": 70
-    },
-    {
-      "ref": "n32",
-      "label": "一人",
-      "node_type": "term",
-      "frequency": 69
-    },
-    {
-      "ref": "n33",
-      "label": "手",
-      "node_type": "term",
-      "frequency": 67
-    },
-    {
-      "ref": "n34",
+      "ref": "n18",
       "label": "男",
       "node_type": "term",
       "frequency": 67
     },
     {
-      "ref": "n35",
-      "label": "意味",
-      "node_type": "term",
-      "frequency": 63
-    },
-    {
-      "ref": "n36",
-      "label": "外",
-      "node_type": "term",
-      "frequency": 61
-    },
-    {
-      "ref": "n37",
-      "label": "様子",
-      "node_type": "term",
-      "frequency": 61
-    },
-    {
-      "ref": "n38",
+      "ref": "n19",
       "label": "病気",
       "node_type": "term",
       "frequency": 61
     },
     {
-      "ref": "n39",
+      "ref": "n20",
       "label": "兄",
       "node_type": "term",
       "frequency": 60
     },
     {
-      "ref": "n40",
-      "label": "声",
-      "node_type": "term",
-      "frequency": 57
-    },
-    {
-      "ref": "n41",
-      "label": "心持",
-      "node_type": "term",
-      "frequency": 57
-    },
-    {
-      "ref": "n42",
-      "label": "急",
-      "node_type": "term",
-      "frequency": 54
-    },
-    {
-      "ref": "n43",
+      "ref": "n21",
       "label": "態度",
       "node_type": "term",
       "frequency": 54
     },
     {
-      "ref": "n44",
+      "ref": "n22",
       "label": "返事",
       "node_type": "term",
       "frequency": 53
     },
     {
-      "ref": "n45",
+      "ref": "n23",
       "label": "問題",
       "node_type": "term",
       "frequency": 52
     },
     {
-      "ref": "n46",
-      "label": "先",
-      "node_type": "term",
-      "frequency": 51
-    },
-    {
-      "ref": "n47",
+      "ref": "n24",
       "label": "卒業",
       "node_type": "term",
       "frequency": 46
     },
     {
-      "ref": "n48",
-      "label": "訳",
-      "node_type": "term",
-      "frequency": 45
-    },
-    {
-      "ref": "n49",
-      "label": "頃",
-      "node_type": "term",
-      "frequency": 45
-    },
-    {
-      "ref": "n50",
-      "label": "今まで",
-      "node_type": "term",
-      "frequency": 44
-    },
-    {
-      "ref": "n51",
-      "label": "変",
-      "node_type": "term",
-      "frequency": 43
-    },
-    {
-      "ref": "n52",
-      "label": "ほとんど",
-      "node_type": "term",
-      "frequency": 42
-    },
-    {
-      "ref": "n53",
-      "label": "必要",
-      "node_type": "term",
-      "frequency": 42
-    },
-    {
-      "ref": "n54",
-      "label": "いっしょ",
-      "node_type": "term",
-      "frequency": 41
-    },
-    {
-      "ref": "n55",
-      "label": "他",
-      "node_type": "term",
-      "frequency": 41
-    },
-    {
-      "ref": "n56",
-      "label": "傍",
-      "node_type": "term",
-      "frequency": 41
-    },
-    {
-      "ref": "n57",
-      "label": "いつも",
-      "node_type": "term",
-      "frequency": 40
-    },
-    {
-      "ref": "n58",
-      "label": "仕方",
-      "node_type": "term",
-      "frequency": 40
-    },
-    {
-      "ref": "n59",
-      "label": "胸",
-      "node_type": "term",
-      "frequency": 40
-    },
-    {
-      "ref": "n60",
-      "label": "風",
-      "node_type": "term",
-      "frequency": 40
-    },
-    {
-      "ref": "n61",
-      "label": "実際",
-      "node_type": "term",
-      "frequency": 39
-    },
-    {
-      "ref": "n62",
-      "label": "調子",
-      "node_type": "term",
-      "frequency": 39
-    },
-    {
-      "ref": "n63",
-      "label": "年",
-      "node_type": "term",
-      "frequency": 37
-    },
-    {
-      "ref": "n64",
-      "label": "以上",
-      "node_type": "term",
-      "frequency": 36
-    },
-    {
-      "ref": "n65",
-      "label": "時々",
-      "node_type": "term",
-      "frequency": 36
-    },
-    {
-      "ref": "n66",
-      "label": "まま",
-      "node_type": "term",
-      "frequency": 35
-    },
-    {
-      "ref": "n67",
+      "ref": "n25",
       "label": "医者",
       "node_type": "term",
       "frequency": 35
     },
     {
-      "ref": "n68",
-      "label": "向う",
-      "node_type": "term",
-      "frequency": 35
-    },
-    {
-      "ref": "n69",
-      "label": "場合",
-      "node_type": "term",
-      "frequency": 35
-    },
-    {
-      "ref": "n70",
+      "ref": "n26",
       "label": "書物",
       "node_type": "term",
       "frequency": 35
     },
     {
-      "ref": "n71",
+      "ref": "n27",
       "label": "世の中",
       "node_type": "term",
       "frequency": 34
     },
     {
-      "ref": "n72",
-      "label": "気分",
+      "ref": "n28",
+      "label": "過去",
       "node_type": "term",
-      "frequency": 33
+      "frequency": 34
     },
     {
-      "ref": "n73",
+      "ref": "n29",
       "label": "記憶",
       "node_type": "term",
       "frequency": 33
     },
     {
-      "ref": "n74",
+      "ref": "n30",
       "label": "想像",
       "node_type": "term",
       "frequency": 32
     },
     {
-      "ref": "n75",
-      "label": "過去",
-      "node_type": "term",
-      "frequency": 32
-    },
-    {
-      "ref": "n76",
-      "label": "例",
-      "node_type": "term",
-      "frequency": 31
-    },
-    {
-      "ref": "n77",
+      "ref": "n31",
       "label": "学校",
       "node_type": "term",
       "frequency": 31
     },
     {
-      "ref": "n78",
-      "label": "結果",
-      "node_type": "term",
-      "frequency": 30
-    },
-    {
-      "ref": "n79",
+      "ref": "n32",
       "label": "身体",
       "node_type": "term",
       "frequency": 30
     },
     {
-      "ref": "n80",
-      "label": "実",
-      "node_type": "term",
-      "frequency": 29
-    },
-    {
-      "ref": "n81",
-      "label": "心配",
-      "node_type": "term",
-      "frequency": 29
-    },
-    {
-      "ref": "n82",
+      "ref": "n33",
       "label": "恋",
       "node_type": "term",
       "frequency": 29
     },
     {
-      "ref": "n83",
+      "ref": "n34",
       "label": "注意",
       "node_type": "term",
       "frequency": 29
     },
     {
-      "ref": "n84",
+      "ref": "n35",
       "label": "世間",
       "node_type": "term",
       "frequency": 28
     },
     {
-      "ref": "n85",
-      "label": "時間",
-      "node_type": "term",
-      "frequency": 28
-    },
-    {
-      "ref": "n86",
-      "label": "腹",
-      "node_type": "term",
-      "frequency": 28
-    },
-    {
-      "ref": "n87",
+      "ref": "n36",
       "label": "お父さん",
       "node_type": "term",
       "frequency": 27
     },
     {
-      "ref": "n88",
-      "label": "すべて",
-      "node_type": "term",
-      "frequency": 27
-    },
-    {
-      "ref": "n89",
-      "label": "代り",
-      "node_type": "term",
-      "frequency": 27
-    },
-    {
-      "ref": "n90",
+      "ref": "n37",
       "label": "友達",
       "node_type": "term",
       "frequency": 27
     },
     {
-      "ref": "n91",
-      "label": "時分",
-      "node_type": "term",
-      "frequency": 27
-    },
-    {
-      "ref": "n92",
+      "ref": "n38",
       "label": "機会",
       "node_type": "term",
       "frequency": 27
     },
     {
-      "ref": "n93",
+      "ref": "n39",
       "label": "考え",
       "node_type": "term",
       "frequency": 26
     },
     {
-      "ref": "n94",
-      "label": "みんな",
-      "node_type": "term",
-      "frequency": 25
-    },
-    {
-      "ref": "n95",
+      "ref": "n40",
       "label": "墓",
       "node_type": "term",
       "frequency": 25
     },
     {
-      "ref": "n96",
-      "label": "平生",
-      "node_type": "term",
-      "frequency": 25
-    },
-    {
-      "ref": "n97",
+      "ref": "n41",
       "label": "机",
       "node_type": "term",
       "frequency": 25
     },
     {
-      "ref": "n98",
+      "ref": "n42",
       "label": "相手",
       "node_type": "term",
       "frequency": 25
     },
     {
-      "ref": "n99",
+      "ref": "n43",
       "label": "一種",
       "node_type": "term",
       "frequency": 24
     },
     {
-      "ref": "n100",
-      "label": "今度",
-      "node_type": "term",
-      "frequency": 24
-    },
-    {
-      "ref": "n101",
-      "label": "月",
-      "node_type": "term",
-      "frequency": 24
-    },
-    {
-      "ref": "n102",
-      "label": "耳",
-      "node_type": "term",
-      "frequency": 24
-    },
-    {
-      "ref": "n103",
+      "ref": "n44",
       "label": "自然",
       "node_type": "term",
       "frequency": 24
     },
     {
-      "ref": "n104",
+      "ref": "n45",
       "label": "覚悟",
       "node_type": "term",
       "frequency": 24
     },
     {
-      "ref": "n105",
+      "ref": "n46",
       "label": "金",
       "node_type": "term",
       "frequency": 24
     },
     {
-      "ref": "n106",
-      "label": "晩",
-      "node_type": "term",
-      "frequency": 23
-    },
-    {
-      "ref": "n107",
+      "ref": "n47",
       "label": "海",
       "node_type": "term",
       "frequency": 23
     },
     {
-      "ref": "n108",
-      "label": "満足",
-      "node_type": "term",
-      "frequency": 23
-    },
-    {
-      "ref": "n109",
-      "label": "たび",
-      "node_type": "term",
-      "frequency": 22
-    },
-    {
-      "ref": "n110",
+      "ref": "n48",
       "label": "力",
       "node_type": "term",
       "frequency": 22
     },
     {
-      "ref": "n111",
+      "ref": "n49",
       "label": "子供",
       "node_type": "term",
       "frequency": 22
     },
     {
-      "ref": "n112",
-      "label": "普通",
-      "node_type": "term",
-      "frequency": 22
-    },
-    {
-      "ref": "n113",
-      "label": "最後",
-      "node_type": "term",
-      "frequency": 22
-    },
-    {
-      "ref": "n114",
-      "label": "段々",
-      "node_type": "term",
-      "frequency": 22
-    },
-    {
-      "ref": "n115",
+      "ref": "n50",
       "label": "財産",
       "node_type": "term",
       "frequency": 22
     },
     {
-      "ref": "n116",
-      "label": "判然",
-      "node_type": "term",
-      "frequency": 21
-    },
-    {
-      "ref": "n117",
-      "label": "同時",
-      "node_type": "term",
-      "frequency": 21
-    },
-    {
-      "ref": "n118",
+      "ref": "n51",
       "label": "国",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n119",
+      "ref": "n52",
       "label": "希望",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n120",
+      "ref": "n53",
       "label": "床",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n121",
+      "ref": "n54",
       "label": "底",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n122",
+      "ref": "n55",
       "label": "挨拶",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n123",
+      "ref": "n56",
       "label": "色",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n124",
-      "label": "足",
-      "node_type": "term",
-      "frequency": 21
-    },
-    {
-      "ref": "n125",
+      "ref": "n57",
       "label": "関係",
       "node_type": "term",
       "frequency": 21
     },
     {
-      "ref": "n126",
-      "label": "しまい",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n127",
-      "label": "不安",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n128",
-      "label": "元",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n129",
+      "ref": "n58",
       "label": "座敷",
       "node_type": "term",
       "frequency": 20
     },
     {
-      "ref": "n130",
-      "label": "念",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n131",
-      "label": "感じ",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n132",
+      "ref": "n59",
       "label": "決心",
       "node_type": "term",
       "frequency": 20
     },
     {
-      "ref": "n133",
+      "ref": "n60",
       "label": "病人",
       "node_type": "term",
       "frequency": 20
     },
     {
-      "ref": "n134",
+      "ref": "n61",
       "label": "襖",
       "node_type": "term",
       "frequency": 20
     },
     {
-      "ref": "n135",
-      "label": "違い",
-      "node_type": "term",
-      "frequency": 20
-    },
-    {
-      "ref": "n136",
+      "ref": "n62",
       "label": "電報",
       "node_type": "term",
       "frequency": 20
     },
     {
-      "ref": "n137",
+      "ref": "n63",
+      "label": "罪",
+      "node_type": "term",
+      "frequency": 19
+    },
+    {
+      "ref": "n64",
+      "label": "精神",
+      "node_type": "term",
+      "frequency": 14
+    },
+    {
+      "ref": "n65",
+      "label": "自殺",
+      "node_type": "term",
+      "frequency": 10
+    },
+    {
+      "ref": "n66",
+      "label": "罪悪",
+      "node_type": "term",
+      "frequency": 9
+    },
+    {
+      "ref": "n67",
+      "label": "明治",
+      "node_type": "term",
+      "frequency": 8
+    },
+    {
+      "ref": "n68",
       "label": "鎌倉",
       "node_type": "place",
       "frequency": 8
+    },
+    {
+      "ref": "n69",
+      "label": "孤独",
+      "node_type": "term",
+      "frequency": 6
+    },
+    {
+      "ref": "n70",
+      "label": "殉死",
+      "node_type": "term",
+      "frequency": 6
+    },
+    {
+      "ref": "n71",
+      "label": "良心",
+      "node_type": "term",
+      "frequency": 5
     }
   ]
 }
