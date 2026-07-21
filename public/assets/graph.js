@@ -721,8 +721,8 @@
         currentWorkId = (data && data.work_id !== undefined) ? data.work_id : null;
         var elements = (data && data.elements) ? data.elements : { nodes: [], edges: [] };
         renderGraph(elements);
-        // 保存済みのテーマ別グルーピング案を復元（Issue #8。AIは呼ばない）
-        loadGroupings();
+        // テーマ別グルーピング（#8）はUIを無効化済み。UI要素があるときだけ復元する。
+        if (groupingSelectEl) loadGroupings();
       })
       .catch(function (err) {
         // 通信・パース失敗。詳細はコンソールへ、画面には簡潔なメッセージのみ。
